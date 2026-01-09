@@ -9,7 +9,7 @@
             --glow: #00ff41; 
             --dim: #003b00; 
             --bg: #050505; 
-            --crt: rgba(18, 16, 16, 0.1);
+            --error: #ff3333;
         }
 
         body, html { 
@@ -19,104 +19,151 @@
             overflow-x: hidden;
         }
 
-        /* --- CRT OVERLAY --- */
+        /* CRT SCANLINE OVERLAY */
         body::after {
-            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 9999; background-size: 100% 3px, 3px 100%; pointer-events: none;
+            content: " "; display: block; position: fixed; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            z-index: 9999; background-size: 100% 3px; pointer-events: none; opacity: 0.4;
         }
 
-        /* --- UI COMPONENTS --- */
-        #entrance { 
-            position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; background: var(--bg); 
+        /* --- AUTHENTICATION SCREEN --- */
+        #auth-screen {
+            position: fixed; inset: 0; background: var(--bg); z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
         }
+
+        .terminal-window {
+            border: 1px solid var(--glow); padding: 30px; 
+            max-width: 450px; width: 100%; box-shadow: 0 0 20px var(--dim);
+            background: rgba(0, 10, 0, 0.9);
+        }
+
+        .pfp-grid { display: flex; justify-content: space-between; margin: 20px 0; }
+        .pfp-item { 
+            cursor: pointer; border: 1px solid var(--dim); 
+            padding: 15px; font-size: 1.5rem; transition: 0.2s; 
+        }
+        .pfp-item.selected { 
+            border-color: var(--glow); background: var(--dim); 
+            box-shadow: 0 0 10px var(--glow); 
+        }
+
+        /* --- MAIN FEED --- */
+        #main-interface { display: none; padding: 20px; }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--dim); padding-bottom: 20px; }
         
-        .logo { 
-            font-size: 2.2rem; font-weight: 900; letter-spacing: 2px; text-align: center;
-            border: 1px solid var(--glow); padding: 25px; box-shadow: 0 0 20px var(--dim); 
-            margin-bottom: 50px; text-transform: uppercase;
+        #feed { max-width: 600px; margin: 0 auto; }
+        .jungle-card { 
+            border: 1px solid var(--glow); margin-bottom: 60px; 
+            background: rgba(0, 20, 0, 0.1); position: relative;
         }
 
-        .choice-btn { 
-            width: 340px; padding: 15px; margin: 12px; border: 1px solid var(--glow); 
-            background: transparent; color: var(--glow); font-size: 1rem; cursor: pointer; 
-            text-transform: uppercase; transition: 0.2s; font-family: inherit;
-        }
-        .choice-btn:hover { background: var(--glow); color: var(--bg); box-shadow: 0 0 25px var(--glow); }
-
-        .page { display: none; padding: 100px 15px; }
-        #feed { max-width: 650px; margin: 0 auto; }
+        .author-info { padding: 10px 15px; font-size: 0.8rem; border-bottom: 1px solid var(--dim); display: flex; align-items: center; gap: 10px; }
         
-        /* --- THE CARDS --- */
-        .tiger-card { 
-            background: rgba(0, 10, 0, 0.4); border: 1px solid var(--glow); 
-            margin-bottom: 80px; position: relative;
-        }
-
-        .watch-link { 
+        .video-portal { 
             display: block; width: 100%; aspect-ratio: 16/9; background: #000; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            text-decoration: none; color: var(--glow); border-bottom: 1px solid var(--glow);
+            text-decoration: none; color: var(--glow); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 0.3s;
         }
-        .watch-link:hover { background: var(--dim); }
+        .video-portal:hover { background: var(--dim); }
 
-        .card-body { padding: 25px; }
-        .interaction-row { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }
-        
-        .btn-action { 
-            background: transparent; border: 1px solid var(--glow); color: var(--glow); 
-            padding: 8px 12px; cursor: pointer; font-family: inherit;
+        /* --- INPUTS --- */
+        input { 
+            background: #000; border: 1px solid var(--dim); color: var(--glow); 
+            padding: 12px; width: 100%; box-sizing: border-box; 
+            margin-top: 10px; font-family: inherit; 
         }
-        
-        .stars { display: flex; gap: 10px; font-size: 1.8rem; color: var(--dim); }
-        .stars span { cursor: pointer; }
-        .stars span.active { color: var(--glow); text-shadow: 0 0 10px var(--glow); }
+        input:focus { border-color: var(--glow); outline: none; }
 
-        /* --- COMMENTS --- */
-        .comment-section { border-top: 1px solid var(--dim); padding-top: 20px; }
-        .com-input { 
-            width: 100%; background: #000; border: 1px solid var(--dim); color: var(--glow); 
-            padding: 12px; box-sizing: border-box; margin-bottom: 15px; font-family: inherit;
+        .btn { 
+            border: 1px solid var(--glow); background: transparent; 
+            color: var(--glow); padding: 12px; width: 100%; 
+            margin-top: 20px; cursor: pointer; font-family: inherit; 
+            text-transform: uppercase; font-weight: bold;
         }
-        .com-list { font-size: 0.9rem; color: var(--glow); opacity: 0.8; }
-        .com-item { padding: 8px 0; border-bottom: 1px solid rgba(0,255,65,0.1); }
+        .btn:hover { background: var(--glow); color: #000; }
 
-        /* --- SYSTEM NAV --- */
-        .back-btn { position: fixed; top: 20px; left: 20px; z-index: 2500; border: 1px solid var(--glow); background: #000; color: var(--glow); padding: 10px 20px; cursor: pointer; display: none; font-family: inherit; }
-        .add-btn { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border: 1px solid var(--glow); background: #000; color: var(--glow); font-size: 35px; cursor: pointer; z-index: 2000; box-shadow: 0 0 15px var(--glow); border-radius: 50%; font-family: inherit; }
+        /* --- ADMIN STYLE --- */
+        .admin-box { border: 1px solid var(--error); color: var(--error); padding: 15px; margin: 20px 0; display: none; }
+        .erase-btn { color: var(--error); border: 1px solid var(--error); background: none; cursor: pointer; padding: 5px; font-size: 0.6rem; margin-top: 10px; }
 
-        #uploadModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 4000; align-items: center; justify-content: center; }
-        .modal-inner { border: 1px solid var(--glow); padding: 40px; width: 90%; max-width: 450px; background: #000; text-align: center; }
+        /* --- UI ELEMENTS --- */
+        .add-btn { 
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; 
+            border: 1px solid var(--glow); background: #000; color: var(--glow); 
+            border-radius: 50%; font-size: 30px; cursor: pointer; z-index: 2000; 
+            box-shadow: 0 0 15px var(--glow);
+        }
     </style>
 </head>
 <body>
 
-<div id="entrance">
-    <div class="logo">WILDLIFE:<br>create/watch the jungle</div>
-    <button class="choice-btn" onclick="enterFeed()">[ ACCESS_JUNGLE_DATABASE ]</button>
+<audio id="music" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg">
+</audio>
+
+<div id="auth-screen">
+    <div class="terminal-window">
+        <h2 style="margin-top:0;">SYSTEM_ACCESS</h2>
+        <p style="font-size: 0.7rem;">ACCOUNT_LOCK: PERMANENT_TO_DEVICE</p>
+        
+        <input type="text" id="username" placeholder="CHOOSE_USERNAME...">
+        <p style="font-size: 0.7rem; margin-top: 15px;">DATE_OF_BIRTH (13-16 ONLY):</p>
+        <input type="date" id="dob">
+        
+        <p style="font-size: 0.7rem; margin-top: 15px;">SELECT_AVATAR:</p>
+        <div class="pfp-grid">
+            <div class="pfp-item" onclick="pickAvatar(this, '💻')">💻</div>
+            <div class="pfp-item" onclick="pickAvatar(this, '📱')">📱</div>
+            <div class="pfp-item" onclick="pickAvatar(this, '📻')">📻</div>
+            <div class="pfp-item" onclick="pickAvatar(this, '🎸')">🎸</div>
+        </div>
+        
+        <button class="btn" onclick="initAccount()">[ INITIALIZE_IDENTITY ]</button>
+        <p id="err" style="color:var(--error); font-size: 0.7rem; margin-top:10px;"></p>
+    </div>
 </div>
 
-<button class="back-btn" id="backBtn" onclick="location.reload()">[ EXIT_JUNGLE ]</button>
-<button class="add-btn" onclick="document.getElementById('uploadModal').style.display='flex'">+</button>
+<div id="main-interface">
+    <div class="header">
+        <h1 style="letter-spacing: 2px;">WILDLIFE: create/watch the jungle</h1>
+        <div id="user-tag" style="font-size: 0.8rem; opacity: 0.7;"></div>
+        <div id="admin-panel" class="admin-box">
+            <p>ROOT_USER_DETECTED: mjmc50</p>
+            <small>Delete protocol enabled on all nodes.</small>
+        </div>
+    </div>
 
-<div id="wildlife-page" class="page"><div id="feed"></div></div>
+    <div id="feed"></div>
+</div>
 
-<div id="uploadModal">
-    <div class="modal-inner">
-        <h2 style="text-transform:uppercase;">Create_Entry</h2>
-        <input type="text" id="driveUrlIn" placeholder="PASTE_DRIVE_LINK..." class="com-input">
-        <input type="text" id="titleIn" placeholder="ENTRY_NAME..." class="com-input">
-        <button class="choice-btn" style="width:100%;" onclick="addPost()">INITIALIZE_UPLOAD</button>
-        <button onclick="document.getElementById('uploadModal').style.display='none'" style="background:none; border:none; color:var(--dim); cursor:pointer; margin-top:20px;">[ ABORT ]</button>
+<button class="add-btn" onclick="openModal()">+</button>
+
+<div id="uploadModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:8000; align-items:center; justify-content:center;">
+    <div class="terminal-window">
+        <h3>INJECT_NEW_STREAM</h3>
+        <input type="text" id="postUrl" placeholder="GOOGLE_DRIVE_LINK...">
+        <input type="text" id="postTitle" placeholder="STREAM_TITLE...">
+        <button class="btn" onclick="uploadStream()">[ COMMENCE_UPLOAD ]</button>
+        <button class="btn" style="border-color:#444; color:#444;" onclick="closeModal()">[ ABORT ]</button>
     </div>
 </div>
 
 <script>
     const BIN_ID = '69609cd1ae596e708fcf605f';
     const KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy';
-    let db = { posts: [] };
+    
+    let db = { posts: [], accounts: [] };
+    let sessionUser = null;
+    let chosenEmoji = "";
+
+    function pickAvatar(el, emoji) {
+        document.querySelectorAll('.pfp-item').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        chosenEmoji = emoji;
+    }
 
     async function sync() {
         const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
@@ -133,88 +180,131 @@
         });
     }
 
-    async function addPost() {
-        const url = document.getElementById('driveUrlIn').value;
-        const title = document.getElementById('titleIn').value || "UNTITLED_LOG";
-        if(!url.includes('drive.google.com')) return alert("ERR: NOT_A_DRIVE_LINK");
+    function getAge(birthDate) {
+        const today = new Date();
+        const birth = new Date(birthDate);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    }
+
+    async function initAccount() {
+        const user = document.getElementById('username').value.trim();
+        const dob = document.getElementById('dob').value;
+        const err = document.getElementById('err');
+
+        if(!user || !dob || !chosenEmoji) { err.innerText = "ALL_FIELDS_REQUIRED"; return; }
+        
+        const age = getAge(dob);
+        if(age < 13 || age > 16) { err.innerText = "ACCESS_DENIED: AGE_OUT_OF_RANGE"; return; }
+
+        await sync();
+        if(db.accounts.find(a => a.user.toLowerCase() === user.toLowerCase())) {
+            err.innerText = "IDENTITY_EXISTS"; return;
+        }
+
+        const newAcc = { user: user, pfp: chosenEmoji, id: Date.now() };
+        db.accounts.push(newAcc);
+        await save();
+
+        localStorage.setItem('jungle_identity', JSON.stringify(newAcc));
+        window.location.reload();
+    }
+
+    async function uploadStream() {
+        const url = document.getElementById('postUrl').value;
+        const title = document.getElementById('postTitle').value || "UNTITLED_LOG";
+
+        if(!url.includes('drive.google.com')) return alert("INVALID_SOURCE: MUST_BE_G_DRIVE");
 
         db.posts.unshift({
             id: Date.now(),
-            url: url, title: title,
-            likes: 0, dislikes: 0, 
-            rating: 0, ratings: [], comments: []
+            author: sessionUser.user,
+            pfp: sessionUser.pfp,
+            url: url,
+            title: title,
+            comments: []
         });
+
         await save();
-        location.reload();
+        window.location.reload();
     }
 
-    async function enterFeed() {
-        document.querySelector('.logo').innerText = "SYNCING_DATABASE...";
-        await sync();
-        document.getElementById('entrance').style.display = 'none';
-        document.getElementById('backBtn').style.display = 'block';
-        document.getElementById('wildlife-page').style.display = 'block';
-        render();
+    async function eraseData(id) {
+        if(confirm("PERMANENTLY_ERASE_LOG?")) {
+            db.posts = db.posts.filter(p => p.id !== id);
+            await save();
+            renderFeed();
+        }
     }
 
-    function render() {
-        const target = document.getElementById('feed');
-        // Unified infinite scroll: Order stays exactly the same for all users
-        target.innerHTML = db.posts.map(p => {
-            const stars = Math.round(p.rating || 0);
-            return `
-            <div class="tiger-card">
-                <a href="${p.url}" target="_blank" class="watch-link">
+    async function postComment(postId, input) {
+        const text = input.value.trim();
+        if(!text) return;
+
+        const post = db.posts.find(p => p.id === postId);
+        post.comments.push(`${sessionUser.user}: ${text}`);
+        
+        input.value = "SYNCING...";
+        await save();
+        input.value = "";
+        renderFeed();
+    }
+
+    function renderFeed() {
+        const container = document.getElementById('feed');
+        container.innerHTML = db.posts.map(p => `
+            <div class="jungle-card">
+                <div class="author-info">
+                    <span>${p.pfp}</span> <strong>${p.author}</strong>
+                </div>
+                <a href="${p.url}" target="_blank" class="video-portal">
                     <span style="font-size:3rem;">▶</span>
-                    <strong>WATCH_DRIVE_LOG</strong>
+                    <small>EXECUTE_DRIVE_LINK</small>
                 </a>
-                <div class="card-body">
-                    <h2 style="margin:0 0 15px 0;">ENTRY: ${p.title}</h2>
-                    <div class="interaction-row">
-                        <button class="btn-action" onclick="react(${p.id}, 'likes')">UP: ${p.likes}</button>
-                        <button class="btn-action" onclick="react(${p.id}, 'dislikes')">DOWN: ${p.dislikes}</button>
-                        <div class="stars">
-                            ${[1,2,3,4,5].map(n => `<span class="${n <= stars ? 'active' : ''}" onclick="rate(${p.id}, ${n})">■</span>`).join('')}
-                        </div>
-                    </div>
-                    <div class="comment-section">
-                        <input class="com-input" placeholder="WRITE_TO_LOG..." onkeydown="if(event.key==='Enter') postComment(${p.id}, this)">
-                        <div class="com-list">
-                            ${(p.comments || []).slice().reverse().map(c => `<div class="com-item">> ${c}</div>`).join('')}
+                <div style="padding: 20px;">
+                    <h2 style="margin:0; font-size: 1.1rem; color: #fff;">${p.title}</h2>
+                    
+                    ${sessionUser.user === 'mjmc50' ? `<button class="erase-btn" onclick="eraseData(${p.id})">[ ERASE_FROM_JUNGLE ]</button>` : ''}
+
+                    <div style="margin-top: 20px; border-top: 1px solid var(--dim); padding-top: 15px;">
+                        <input class="com-input" placeholder="APPEND_TO_LOG..." onkeydown="if(event.key==='Enter') postComment(${p.id}, this)">
+                        <div style="font-size: 0.7rem; margin-top: 10px; color: #888;">
+                            ${(p.comments || []).slice().reverse().map(c => `<div style="margin-bottom:5px;">> ${c}</div>`).join('')}
                         </div>
                     </div>
                 </div>
-            </div>`;
-        }).join('');
+            </div>
+        `).join('');
     }
 
-    async function react(id, key) {
-        const p = db.posts.find(x => x.id === id);
-        p[key]++;
-        await save();
-        render(); 
-    }
+    function openModal() { document.getElementById('uploadModal').style.display='flex'; }
+    function closeModal() { document.getElementById('uploadModal').style.display='none'; }
 
-    async function rate(id, val) {
-        const p = db.posts.find(x => x.id === id);
-        if(!p.ratings) p.ratings = [];
-        p.ratings.push(val);
-        p.rating = p.ratings.reduce((a,b) => a+b, 0) / p.ratings.length;
-        await save();
-        render();
-    }
+    // BOOT SEQUENCE
+    window.onload = async () => {
+        const idCheck = localStorage.getItem('jungle_identity');
+        
+        if(idCheck) {
+            sessionUser = JSON.parse(idCheck);
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-interface').style.display = 'block';
+            document.getElementById('user-tag').innerHTML = `IDENTITY: ${sessionUser.pfp} ${sessionUser.user}`;
+            
+            if(sessionUser.user === 'mjmc50') {
+                document.getElementById('admin-panel').style.display = 'block';
+            }
 
-    async function postComment(id, input) {
-        const val = input.value.trim();
-        if(!val) return;
-        const p = db.posts.find(x => x.id === id);
-        if(!p.comments) p.comments = [];
-        p.comments.push(val);
-        input.value = "WRITING_DATA...";
-        await save();
-        input.value = "";
-        render();
-    }
+            // Start Audio on first click
+            document.body.addEventListener('click', () => {
+                document.getElementById('music').play();
+            }, { once: true });
+
+            await sync();
+            renderFeed();
+        }
+    };
 </script>
 </body>
 </html>
