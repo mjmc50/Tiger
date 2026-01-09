@@ -4,42 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TigerStream | B&W Wildlife</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <style>
         :root { --main: #ffffff; --bg: #000000; --gray: #222222; --text: #cccccc; }
-        
-        body, html { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--main); font-family: 'Courier New', Courier, monospace; overflow-x: hidden; }
+        body, html { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--main); font-family: 'Courier New', Courier, monospace; }
 
         /* --- HUB --- */
         #entrance { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
-        .logo { font-size: 3rem; font-weight: 900; letter-spacing: 5px; color: var(--main); border-bottom: 5px solid var(--main); margin-bottom: 40px; padding-bottom: 10px; }
-        .choice-btn { width: 300px; padding: 15px; margin: 12px; border: 2px solid var(--main); background: transparent; color: white; font-size: 1rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .logo { font-size: 3rem; font-weight: 900; letter-spacing: 5px; color: var(--main); border-bottom: 5px solid var(--main); margin-bottom: 40px; }
+        .choice-btn { width: 300px; padding: 15px; margin: 12px; border: 2px solid var(--main); background: transparent; color: white; cursor: pointer; text-transform: uppercase; }
         .choice-btn:hover { background: var(--main); color: #000; }
 
         /* --- CARDS --- */
         .page { display: none; padding: 80px 15px; }
-        .tiger-card { background: #000; border: 1px solid var(--main); border-radius: 0px; max-width: 600px; margin: 0 auto 60px; overflow: hidden; }
-        .card-header { padding: 10px 20px; border-bottom: 1px solid var(--main); font-size: 0.8rem; letter-spacing: 2px; }
+        .tiger-card { background: #000; border: 1px solid var(--main); max-width: 600px; margin: 0 auto 60px; overflow: hidden; }
         
-        /* VIDEO RENDER FIX */
-        .video-container { width: 100%; background: #111; aspect-ratio: 16/9; }
-        video { width: 100%; height: 100%; display: block; object-fit: contain; }
+        /* DRIVE PREVIEW BOX */
+        .drive-preview { 
+            width: 100%; aspect-ratio: 16/9; background: #111; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; border-bottom: 1px solid var(--main);
+            text-decoration: none; color: var(--main);
+        }
+        .drive-preview:hover { background: #222; }
 
         .card-body { padding: 20px; }
         .interaction-row { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .btn-action { background: transparent; border: 1px solid var(--main); color: white; padding: 8px 15px; cursor: pointer; font-size: 0.8rem; }
+        .btn-action { background: transparent; border: 1px solid var(--main); color: white; padding: 8px 15px; cursor: pointer; }
         
-        /* RATING */
         .stars { display: flex; gap: 5px; font-size: 1.2rem; color: #444; }
         .stars span { cursor: pointer; }
         .stars span.active { color: var(--main); }
 
         /* COMMENTS */
         .comment-box { border-top: 1px solid var(--gray); padding-top: 15px; }
-        .com-input { width: 100%; background: #000; border: 1px solid var(--gray); color: white; padding: 10px; box-sizing: border-box; }
-        .com-list { margin-top: 10px; font-size: 0.8rem; color: var(--text); }
-        .com-item { padding: 5px 0; border-bottom: 1px dotted var(--gray); }
+        .com-input { width: 100%; background: #000; border: 1px solid var(--gray); color: white; padding: 10px; box-sizing: border-box; margin-bottom: 10px; }
+        .com-list { font-size: 0.8rem; color: var(--text); }
+        .com-item { padding: 8px 0; border-bottom: 1px dotted var(--gray); }
 
         /* NAV */
         .back-btn { position: fixed; top: 20px; left: 20px; z-index: 2500; border: 1px solid var(--main); background: #000; color: #fff; padding: 10px; cursor: pointer; display: none; }
@@ -54,38 +54,28 @@
 <div id="entrance">
     <div class="logo">WILDLIFE</div>
     <button class="choice-btn" onclick="navTo('wildlife')">ENTER FEED</button>
-    <button class="choice-btn" onclick="navTo('search')">SEARCH</button>
 </div>
 
 <button class="back-btn" id="backBtn" onclick="location.reload()">BACK</button>
 <button class="add-btn" onclick="document.getElementById('uploadModal').style.display='flex'">+</button>
 
 <div id="wildlife-page" class="page"><div id="feed"></div></div>
-<div id="search-page" class="page">
-    <input type="text" placeholder="SEARCH_KEYWORD..." class="com-input" style="max-width:500px; display:block; margin: 0 auto 30px;" oninput="doSearch(this.value)">
-    <div id="search-results"></div>
-</div>
 
 <div id="uploadModal">
     <div class="modal-inner">
-        <h3>UPLOAD_FILE</h3>
-        <input type="file" id="fileIn" accept="video/*" onchange="checkVideo()">
-        <input type="text" id="titleIn" placeholder="TITLE..." class="com-input" style="margin-top:10px;">
-        <p id="status" style="font-size:10px; margin:15px 0;">Awaiting file...</p>
-        <button id="postBtn" class="choice-btn" style="width:100%; display:none;" onclick="uploadVideo()">COMMIT TO FEED</button>
+        <h3>PASTE DRIVE LINK</h3>
+        <p style="font-size: 10px;">1. Upload to Google Drive<br>2. Set sharing to "Anyone with link"<br>3. Paste the link below</p>
+        <input type="text" id="driveUrlIn" placeholder="https://drive.google.com/..." class="com-input">
+        <input type="text" id="titleIn" placeholder="VIDEO TITLE..." class="com-input">
+        <button class="choice-btn" style="width:100%;" onclick="addDrivePost()">SAVE PERMANENTLY</button>
         <button onclick="document.getElementById('uploadModal').style.display='none'" style="background:none; border:none; color:gray; cursor:pointer; margin-top:10px;">CANCEL</button>
     </div>
 </div>
-
-<video id="aiHelper" style="display:none;" muted></video>
 
 <script>
     const BIN_ID = '69609cd1ae596e708fcf605f';
     const KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy';
     let db = { posts: [] };
-    let detector;
-
-    cocoSsd.load().then(m => detector = m);
 
     async function sync() {
         const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': KEY, 'X-Bin-Meta': 'false'}});
@@ -99,52 +89,27 @@
         });
     }
 
-    function checkVideo() {
-        const out = document.getElementById('status');
-        const file = document.getElementById('fileIn').files[0];
-        const vid = document.getElementById('aiHelper');
-        out.innerText = "SCANNING_CLIP...";
-        vid.src = URL.createObjectURL(file);
-        vid.onloadeddata = async () => {
-            vid.currentTime = 1;
-            setTimeout(async () => {
-                await detector.detect(vid);
-                out.innerText = "FILE_READY";
-                document.getElementById('postBtn').style.display = "block";
-            }, 500);
-        };
-    }
+    async function addDrivePost() {
+        const url = document.getElementById('driveUrlIn').value;
+        const title = document.getElementById('titleIn').value || "UNTITLED";
+        if(!url.includes('drive.google.com')) return alert("Please use a Google Drive link!");
 
-    async function uploadVideo() {
-        document.getElementById('status').innerText = "WRITING_TO_DATABASE...";
-        const fd = new FormData();
-        fd.append('fileToUpload', document.getElementById('fileIn').files[0]);
-        fd.append('reqtype', 'fileupload');
-        
-        const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { method: 'POST', body: fd });
-        const url = await res.text();
-        
-        if(url.includes('https')) {
-            db.posts.unshift({
-                id: Date.now(),
-                url: url, 
-                title: document.getElementById('titleIn').value || "UNTITLED",
-                likes: 0, dislikes: 0, 
-                rating: 0, ratings: [], comments: []
-            });
-            await save();
-            location.reload();
-        }
+        db.posts.unshift({
+            id: Date.now(),
+            url: url,
+            title: title,
+            likes: 0, dislikes: 0, 
+            rating: 0, ratings: [], comments: []
+        });
+        await save();
+        location.reload();
     }
 
     function navTo(page) {
         document.getElementById('entrance').style.display = 'none';
         document.getElementById('backBtn').style.display = 'block';
         document.getElementById(page + '-page').style.display = 'block';
-        if(page === 'wildlife') {
-            const shuffled = [...db.posts].sort(() => 0.5 - Math.random());
-            render(shuffled, document.getElementById('feed'));
-        }
+        render(db.posts, document.getElementById('feed'));
     }
 
     function render(data, target) {
@@ -152,21 +117,21 @@
             const stars = Math.round(p.rating || 0);
             return `
             <div class="tiger-card">
-                <div class="card-header">REF_ID: ${p.id}</div>
-                <div class="video-container">
-                    <video src="${p.url}" controls playsinline></video>
-                </div>
+                <a href="${p.url}" target="_blank" class="drive-preview">
+                    ▶ WATCH ON GOOGLE DRIVE
+                </a>
                 <div class="card-body">
                     <h2 style="margin:0 0 10px 0;">${p.title}</h2>
                     <div class="interaction-row">
-                        <button class="btn-action" onclick="handleReact(${p.id}, 'likes', this)">UP: ${p.likes}</button>
-                        <button class="btn-action" onclick="handleReact(${p.id}, 'dislikes', this)">DOWN: ${p.dislikes}</button>
+                        <button class="btn-action" onclick="handleReact(${p.id}, 'likes')">UP: ${p.likes}</button>
+                        <button class="btn-action" onclick="handleReact(${p.id}, 'dislikes')">DOWN: ${p.dislikes}</button>
                         <div class="stars">
                             ${[1,2,3,4,5].map(n => `<span class="${n <= stars ? 'active' : ''}" onclick="handleRate(${p.id}, ${n})">●</span>`).join('')}
                         </div>
                     </div>
                     <div class="comment-box">
-                        <input class="com-input" placeholder="ADD_COMMENT..." onkeydown="if(event.key==='Enter') handleComment(${p.id}, this)">
+                        <input class="com-input" placeholder="ADD COMMENT & HIT ENTER..." 
+                               onkeydown="if(event.key==='Enter') { handleComment(${p.id}, this); }">
                         <div class="com-list">${(p.comments || []).slice().reverse().map(c => `<div class="com-item">> ${c}</div>`).join('')}</div>
                     </div>
                 </div>
@@ -174,11 +139,11 @@
         }).join('');
     }
 
-    async function handleReact(id, key, btn) {
+    async function handleReact(id, key) {
         const p = db.posts.find(x => x.id === id);
         p[key]++;
-        btn.innerText = (key === 'likes' ? 'UP: ' : 'DOWN: ') + p[key];
         await save();
+        render(db.posts, document.getElementById('feed'));
     }
 
     async function handleRate(id, val) {
@@ -187,21 +152,19 @@
         p.ratings.push(val);
         p.rating = p.ratings.reduce((a,b) => a+b, 0) / p.ratings.length;
         await save();
-        location.reload();
+        render(db.posts, document.getElementById('feed'));
     }
 
     async function handleComment(id, input) {
         if(!input.value.trim()) return;
         const p = db.posts.find(x => x.id === id);
+        if(!p.comments) p.comments = [];
         p.comments.push(input.value);
-        input.value = "";
+        const text = input.value;
+        input.value = "Saving...";
         await save();
-        location.reload();
-    }
-
-    function doSearch(val) {
-        const results = db.posts.filter(p => p.title.toLowerCase().includes(val.toLowerCase()));
-        render(results, document.getElementById('search-results'));
+        input.value = "";
+        render(db.posts, document.getElementById('feed'));
     }
 
     sync();
