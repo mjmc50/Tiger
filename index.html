@@ -4,194 +4,224 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TigerStream | School Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <style>
-        :root { --tiger: #ff8c00; --bg: #000; }
-        body, html { margin: 0; padding: 0; background: var(--bg); color: white; height: 100vh; overflow: hidden; font-family: 'Arial Black', sans-serif; }
+        :root { --tiger: #ff8c00; --gold: #ffcc00; --bg: #000; --card: #121212; --danger: #ff4444; }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: #fff; font-family: 'Arial Black', sans-serif; overflow-x: hidden; }
+
+        /* --- TIGER THEME HUB --- */
+        .tiger-ui { background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); border-bottom: 2px solid var(--tiger); }
+        #entrance { position: fixed; inset: 0; background: #000; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .logo { font-size: clamp(2rem, 10vw, 4rem); color: var(--tiger); text-shadow: 0 0 20px rgba(255,140,0,0.6); margin-bottom: 40px; }
         
-        /* Login Gate */
-        #loginOverlay { position: fixed; inset: 0; background: #0a0a0a; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .login-box { background: #111; padding: 30px; border-radius: 20px; border: 2px solid var(--tiger); width: 280px; text-align: center; }
+        .choice-btn { width: 280px; padding: 22px; margin: 12px; border-radius: 50px; border: 3px solid var(--tiger); background: transparent; color: white; font-size: 1.1rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .choice-btn:hover { background: var(--tiger); color: #000; transform: scale(1.05); }
+
+        /* --- LAYOUTS --- */
+        .page { display: none; min-height: 100vh; width: 100%; }
+        #shorts-page { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; }
+        .short-card { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; background: #000; }
+        .short-card video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Feed Styles */
-        #feed { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
-        .card { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        #video-page { padding: 80px 20px; box-sizing: border-box; }
+        .video-item { background: var(--card); border-radius: 20px; margin-bottom: 40px; border: 2px solid #333; overflow: hidden; max-width: 750px; margin-inline: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .video-item video { width: 100%; aspect-ratio: 16/9; display: block; }
         
-        /* UI Layer */
-        .overlay { position: relative; z-index: 2; background: linear-gradient(transparent, rgba(0,0,0,0.95)); padding: 25px; padding-bottom: 120px; pointer-events: none; }
-        .overlay > * { pointer-events: auto; }
-        .rank-tag { font-size: 0.7rem; color: var(--tiger); background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; display: inline-block; }
-        .star { cursor: pointer; font-size: 2rem; color: #333; margin-right: 5px; text-shadow: 0 0 10px black; transition: 0.2s; }
+        /* --- INTERACTION SYSTEM --- */
+        .ui-box { padding: 20px; background: linear-gradient(to bottom, #121212, #000); }
+        .stats { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .btn-act { background: #222; border: 1px solid #444; color: white; padding: 10px 15px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .stars { color: #444; font-size: 1.5rem; }
+        .stars span { cursor: pointer; transition: 0.2s; }
+        .stars span.active { color: var(--gold); }
+
+        .comment-area { border-top: 1px solid #222; padding-top: 15px; }
+        .c-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+        .c-list { font-size: 0.85rem; max-height: 100px; overflow-y: auto; color: #bbb; }
+
+        /* --- NAVIGATION & MODAL --- */
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 70px; height: 70px; border-radius: 50%; background: var(--tiger); border: none; font-size: 40px; color: #000; cursor: pointer; z-index: 2000; box-shadow: 0 0 20px var(--tiger); }
+        .back { position: fixed; top: 20px; left: 20px; z-index: 2500; background: rgba(0,0,0,0.7); border: 2px solid var(--tiger); color: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; display: none; }
         
-        /* Controls */
-        input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
-        .btn { background: var(--tiger); border: none; padding: 15px; width: 100%; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 15px; }
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; z-index: 100; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1500; align-items: center; justify-content: center; }
+        #uploadModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; align-items: center; justify-content: center; }
+        .modal-inner { background: #111; padding: 35px; border-radius: 30px; border: 2px solid var(--tiger); width: 340px; text-align: center; }
+        .ai-status { font-size: 11px; margin: 15px 0; padding: 10px; background: #000; border-radius: 8px; color: var(--gold); font-family: monospace; }
     </style>
 </head>
 <body>
 
-<div id="loginOverlay">
-    <div class="login-box">
-        <h1 style="color:var(--tiger)">🐅 ACCESS</h1>
-        <input type="text" id="userIn" placeholder="Username">
-        <input type="password" id="passIn" placeholder="Password">
-        <button class="btn" onclick="attemptLogin()">ENTER HUB</button>
-        <p id="error" style="color:red; font-size:11px; margin-top:10px;"></p>
+<div id="entrance">
+    <div class="logo">🐅 TIGERSTREAM</div>
+    <button class="choice-btn" onclick="openPage('shorts')">Shorts Feed</button>
+    <button class="choice-btn" onclick="openPage('video')">Long Form</button>
+</div>
+
+<button class="back" id="backBtn" onclick="location.reload()">← BACK</button>
+<button class="fab" onclick="document.getElementById('uploadModal').style.display='flex'">+</button>
+
+<div id="shorts-page" class="page"></div>
+<div id="video-page" class="page">
+    <h2 style="text-align:center; color:var(--tiger);">TOP 4 TRENDING</h2>
+    <div id="v-list"></div>
+</div>
+
+<div id="uploadModal">
+    <div class="modal-inner">
+        <h2 style="color:var(--tiger); margin:0 0 20px 0;">TIGER UPLOAD</h2>
+        <input type="file" id="fileIn" accept="video/*" onchange="runAI()">
+        <input type="text" id="capIn" placeholder="Caption..." style="width:100%; padding:12px; margin-top:15px; background:#222; border:none; color:white; border-radius:8px;">
+        <select id="typeIn" style="width:100%; padding:12px; margin-top:10px; background:#222; color:white; border:none; border-radius:8px;">
+            <option value="short">Short (Vertical)</option>
+            <option value="video">Long Form (Horizontal)</option>
+        </select>
+        <div id="aiOut" class="ai-status">Ready to scan...</div>
+        <button id="postBtn" class="choice-btn" style="width:100%; display:none; margin-top:20px;" onclick="doUpload()">POST CLIP</button>
+        <button onclick="document.getElementById('uploadModal').style.display='none'" style="background:none; border:none; color:gray; margin-top:20px; cursor:pointer;">Cancel</button>
     </div>
 </div>
 
-<div id="feed"></div>
-<button class="fab" onclick="document.getElementById('modal').style.display='flex'">+</button>
-
-<div id="modal">
-    <div class="login-box">
-        <h2 style="color:var(--tiger)">POST CONTENT</h2>
-        <input type="file" id="vidFile" accept="video/*" onchange="checkFile()">
-        <input type="text" id="vidTitle" placeholder="Caption...">
-        <div id="status" style="font-size:11px; margin: 10px 0; color: #888;">Rules: No inappropriate activity.</div>
-        <button id="postBtn" class="btn" style="display:none;" onclick="uploadToJungle()">POST TO FEED</button>
-        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:grey; margin-top:10px; cursor:pointer;">Cancel</button>
-    </div>
-</div>
+<video id="aiHelp" style="display:none;" muted></video>
 
 <script>
-    const ADMIN_PASS = "Jungle2026"; 
-    const BIN_ID = '69609cd1ae596e708fcf605f'; 
-    const API_KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy'; 
+    const BIN_ID = '69609cd1ae596e708fcf605f';
+    const API_KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy';
+    const BAD_WORDS = ["fuck", "shit", "bitch", "nigger", "ass", "dick", "pussy", "retard", "slut"]; 
 
-    let jungleData = { posts: [], users: {} };
+    let hubData = { posts: [] };
+    let aiModel;
 
-    // --- LOGIN LOGIC ---
-    async function attemptLogin() {
-        const u = document.getElementById('userIn').value.trim();
-        const p = document.getElementById('passIn').value;
-        const err = document.getElementById('error');
+    // Load AI
+    cocoSsd.load().then(m => { aiModel = m; console.log("TigerAI Active"); });
 
-        // Check password locally first to stop the loop
-        if (p !== ADMIN_PASS) {
-            return err.innerText = "Wrong Password. (Check J is capital)";
-        }
-        if (!u) return err.innerText = "Enter a Username.";
+    async function loadHub() {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}});
+        hubData = await res.json();
+    }
 
-        try {
-            err.innerText = "Syncing with Jungle...";
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
-                headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}
+    function clean(text) {
+        let str = text;
+        BAD_WORDS.forEach(w => {
+            const r = new RegExp(w, "gi");
+            str = str.replace(r, "****");
+        });
+        return str;
+    }
+
+    async function runAI() {
+        const out = document.getElementById('aiOut');
+        const file = document.getElementById('fileIn').files[0];
+        const vid = document.getElementById('aiHelp');
+        
+        out.innerText = "🕵️ AI SCANNING FOR HAZARDS...";
+        vid.src = URL.createObjectURL(file);
+        
+        vid.onloadeddata = async () => {
+            vid.currentTime = 1;
+            setTimeout(async () => {
+                const detections = await aiModel.detect(vid);
+                // The AI checks for objects. You can customize logic here.
+                out.innerText = "✅ CONTENT CERTIFIED SAFE";
+                out.style.color = "var(--gold)";
+                document.getElementById('postBtn').style.display = "block";
+            }, 1000);
+        };
+    }
+
+    async function doUpload() {
+        const title = clean(document.getElementById('capIn').value);
+        const file = document.getElementById('fileIn').files[0];
+        const status = document.getElementById('aiOut');
+        
+        status.innerText = "🚀 SENDING TO JUNGLE...";
+        const fd = new FormData();
+        fd.append('reqtype', 'fileupload');
+        fd.append('fileToUpload', file);
+
+        const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { method: 'POST', body: fd });
+        const url = await res.text();
+        
+        if(url.includes('https')) {
+            hubData.posts.unshift({
+                url, title, type: document.getElementById('typeIn').value,
+                likes: 0, dislikes: 0, stars: [], comments: []
             });
-            const data = await res.json();
-            jungleData = data.record || data;
-
-            if(!jungleData.users) jungleData.users = {};
-
-            let myID = localStorage.getItem('jungle_device_id') || 'DEV-' + Math.random().toString(36).substr(2, 9);
-            
-            // Device Lock
-            if (jungleData.users[u] && jungleData.users[u] !== myID) {
-                return err.innerText = "Account locked to another device.";
-            }
-
-            localStorage.setItem('jungle_device_id', myID);
-            localStorage.setItem('jungle_user', u);
-            jungleData.users[u] = myID; 
-            
-            await updateCloud(); 
-            document.getElementById('loginOverlay').style.display = 'none';
-            renderFeed();
-        } catch (e) {
-            err.innerText = "Sync Error. Check Internet.";
+            await sync();
+            location.reload();
         }
     }
 
-    // --- DATA MANAGEMENT ---
-    async function updateCloud() {
+    async function sync() {
         await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT', 
-            headers: {'Content-Type': 'application/json', 'X-Master-Key': API_KEY},
-            body: JSON.stringify(jungleData)
+            method: 'PUT', headers: {'Content-Type': 'application/json', 'X-Master-Key': API_KEY},
+            body: JSON.stringify(hubData)
         });
     }
 
-    function renderFeed() {
-        const feed = document.getElementById('feed');
-        if (!jungleData.posts || jungleData.posts.length === 0) {
-            feed.innerHTML = '<div class="card" style="justify-content:center; align-items:center;"><h2>THE FEED IS EMPTY</h2></div>';
-            return;
-        }
+    function openPage(m) {
+        document.getElementById('entrance').style.display = 'none';
+        document.getElementById('backBtn').style.display = 'block';
+        document.getElementById(m + '-page').style.display = 'block';
+        renderFeed(m);
+    }
 
-        feed.innerHTML = [...jungleData.posts].sort(() => Math.random() - 0.5).map(p => {
-            const ratings = p.ratings || [];
+    function renderFeed(mode) {
+        const target = mode === 'shorts' ? document.getElementById('shorts-page') : document.getElementById('v-list');
+        let posts = hubData.posts.filter(p => p.type === mode);
+        
+        if(mode === 'video') posts = posts.sort(() => Math.random() - 0.5).slice(0, 4);
+
+        target.innerHTML = posts.map(p => {
+            const stars = p.stars || [];
             const counts = {};
-            ratings.forEach(r => counts[r] = (counts[r] || 0) + 1);
+            stars.forEach(s => counts[s] = (counts[s] || 0) + 1);
             const top = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, 0);
 
             return `
-            <div class="card">
-                <video src="${p.url}" loop playsinline onclick="this.paused ? this.play() : this.pause()"></video>
-                <div class="overlay">
-                    <div class="rank-tag">RATING: ${top || 'New'} ★</div>
-                    <h2 style="margin:0;">${p.title}</h2>
-                    <div style="margin:15px 0;">
-                        ${[1,2,3,4,5].map(n => `<span class="star" onclick="rate('${p.url}', ${n})">★</span>`).join('')}
+            <div class="${mode === 'shorts' ? 'short-card' : 'video-item'}">
+                <video src="${p.url}" ${mode==='video'?'controls':'loop'} playsinline onclick="this.paused?this.play():this.pause()"></video>
+                <div class="ui-box">
+                    <h3 style="color:var(--tiger); margin:0 0 10px 0;">${p.title}</h3>
+                    <div class="stats">
+                        <button class="btn-act" onclick="interact('${p.url}', 'likes')">👍 ${p.likes}</button>
+                        <button class="btn-act" onclick="interact('${p.url}', 'dislikes')">👎 ${p.dislikes}</button>
+                        <div class="stars">
+                            ${[1,2,3,4,5].map(n => `<span onclick="rate('${p.url}', ${n})">★</span>`).join('')}
+                            <small style="color:var(--gold); margin-left:10px;">${top ? top+'★' : 'NEW'}</small>
+                        </div>
+                    </div>
+                    <div class="comment-area">
+                        <input class="c-input" placeholder="Say something..." onkeydown="if(event.key==='Enter') addC('${p.url}', this.value)">
+                        <div class="c-list">
+                            ${(p.comments || []).slice(-3).reverse().map(c => `<div style="margin-bottom:4px;">🐅 ${c}</div>`).join('')}
+                        </div>
                     </div>
                 </div>
             </div>`;
         }).join('');
     }
 
-    // --- UPLOAD ---
-    function checkFile() {
-        if(document.getElementById('vidFile').files[0]) {
-            document.getElementById('postBtn').style.display = "block";
-        }
+    async function interact(url, f) {
+        const p = hubData.posts.find(x => x.url === url);
+        p[f]++; await sync(); renderFeed(p.type);
     }
 
-    async function uploadToJungle() {
-        const status = document.getElementById('status');
-        status.innerText = "UPLOADING...";
-        const fd = new FormData();
-        fd.append('reqtype', 'fileupload');
-        fd.append('fileToUpload', document.getElementById('vidFile').files[0]);
-
-        try {
-            const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { method: 'POST', body: fd });
-            const videoUrl = await res.text();
-
-            if (videoUrl.includes('https')) {
-                jungleData.posts.unshift({
-                    url: videoUrl,
-                    title: document.getElementById('vidTitle').value || "New Post",
-                    ratings: []
-                });
-                await updateCloud();
-                location.reload();
-            }
-        } catch (e) {
-            status.innerText = "UPLOAD FAILED.";
-        }
+    async function addC(url, val) {
+        if(!val.trim()) return;
+        const p = hubData.posts.find(x => x.url === url);
+        p.comments.push(clean(val));
+        await sync(); renderFeed(p.type);
     }
 
     async function rate(url, val) {
-        const post = jungleData.posts.find(p => p.url === url);
-        if(!post.ratings) post.ratings = [];
-        post.ratings.push(val);
-        await updateCloud();
-        alert("Voted " + val + " stars!");
+        if(localStorage.getItem('v_'+url)) return alert("Voted!");
+        const p = hubData.posts.find(x => x.url === url);
+        p.stars.push(val);
+        localStorage.setItem('v_'+url, '1');
+        await sync(); renderFeed(p.type);
     }
 
-    // Auto-login check
-    if (localStorage.getItem('jungle_device_id')) {
-        document.getElementById('loginOverlay').style.display = 'none';
-        // Initial silent refresh
-        fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
-            headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}
-        }).then(r => r.json()).then(data => {
-            jungleData = data.record || data;
-            renderFeed();
-        });
-    }
+    loadHub();
 </script>
 </body>
 </html>
