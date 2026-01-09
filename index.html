@@ -2,200 +2,169 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TigerStream | AI Secret Jungle</title>
-    
+    <title>TigerStream | Auto-Jungle</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-
     <style>
-        :root { --tiger: #ff8c00; --bg: #0a0a0a; --card: #161616; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; overflow-x: hidden; }
-        nav { background: var(--tiger); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: black; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .container { max-width: 700px; margin: auto; padding: 20px; }
-        .card { background: var(--card); border: 2px solid #222; border-radius: 20px; margin-bottom: 40px; overflow: hidden; }
+        :root { --tiger: #ff8c00; --bg: #0a0a0a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; }
+        nav { background: var(--tiger); padding: 15px; display: flex; justify-content: space-between; color: black; position: sticky; top: 0; z-index: 100; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+        .card { background: #161616; border: 2px solid #222; border-radius: 15px; margin-bottom: 30px; overflow: hidden; }
         iframe { width: 100%; aspect-ratio: 16/9; border: none; }
-        .content-padding { padding: 20px; }
-        .star { cursor: pointer; color: #333; font-size: 1.8rem; }
+        .content { padding: 15px; }
+        .star { cursor: pointer; font-size: 1.5rem; color: #333; }
         .star.active { color: var(--tiger); }
-        .comment-section { background: #0d0d0d; border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .comment { font-family: sans-serif; font-size: 0.9rem; margin-bottom: 8px; border-left: 3px solid var(--tiger); padding-left: 10px; }
-        input[type="text"] { width: 100%; padding: 12px; box-sizing: border-box; background: #000; color: white; border: 1px solid #333; border-radius: 8px; margin-top: 10px; }
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 66px; height: 66px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; cursor: pointer; z-index: 99; }
-        #uploadOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; }
-        .modal { background: #1a1a1a; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; border: 4px solid var(--tiger); text-align: center; }
-        .btn-post { background: var(--tiger); color: black; font-weight: bold; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; width: 100%; }
+        .comment-box { background: #000; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        input[type="text"] { width: 100%; padding: 10px; background: #111; color: white; border: 1px solid #333; border-radius: 5px; box-sizing: border-box; }
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: var(--tiger); border: none; font-size: 30px; cursor: pointer; }
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-ui { background: #222; padding: 30px; border-radius: 20px; width: 320px; text-align: center; border: 3px solid var(--tiger); }
     </style>
 </head>
 <body>
 
 <nav>
-    <div><strong>🐅 TIGERSTREAM</strong></div>
-    <div id="aiIndicator" style="font-size: 0.7rem; background: black; color: var(--tiger); padding: 5px 10px; border-radius: 20px;">AI LOADING...</div>
+    <strong>🐅 TIGERSTREAM</strong>
+    <span id="aiStat" style="font-size: 10px; background: black; color: var(--tiger); padding: 4px 8px; border-radius: 10px;">LOADING AI...</span>
 </nav>
 
-<div class="container" id="feed">
-    <h2 style="text-align:center; color:#333; margin-top:100px;">Waking up the jungle...</h2>
-</div>
+<div class="container" id="feed">Loading Jungle...</div>
 
-<button class="fab" onclick="toggleModal(true)">+</button>
+<button class="fab" onclick="document.getElementById('modal').style.display='flex'">+</button>
 
-<div id="uploadOverlay">
-    <div class="modal">
-        <h2 style="color:var(--tiger); margin-top:0;">ADD TO JUNGLE</h2>
-        <input type="file" id="videoFile" accept="video/*" onchange="runAiCheck()">
-        <input type="text" id="videoTitle" placeholder="Video Title...">
-        <div id="statusBox" style="margin: 15px 0; font-size: 0.8rem;">Waiting for file...</div>
-        <button id="postBtn" class="btn-post" onclick="startAuth()" disabled>AI SCAN REQUIRED</button>
-        <button onclick="toggleModal(false)" style="background:none; color:#666; border:none; margin-top:20px; cursor:pointer;">Cancel</button>
+<div id="modal">
+    <div class="modal-ui">
+        <h2 style="color:var(--tiger)">AUTO-POST</h2>
+        <input type="file" id="vidIn" accept="video/*" onchange="autoProcess()">
+        <input type="text" id="titleIn" placeholder="Title...">
+        <div id="status" style="margin: 15px 0; font-size: 12px; color: #888;">Select a video to begin.</div>
+        <button id="mainBtn" style="display:none; background:var(--tiger); border:none; padding:10px; width:100%; font-weight:bold; cursor:pointer;" onclick="startAuth()">LOGIN & POST</button>
+        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:grey; margin-top:10px; cursor:pointer;">Cancel</button>
     </div>
 </div>
 
-<video id="aiProcessor" style="display:none;" muted></video>
+<video id="processor" style="display:none;" muted></video>
 
 <script>
     const BIN_ID = '6960939543b1c97be9237b80'; 
     const API_KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy'; 
-    const CLIENT_ID = 'PASTE_YOUR_GOOGLE_CLIENT_ID_HERE'; 
+    const CLIENT_ID = 'PASTE_YOUR_GOOGLE_ID_HERE'; // MUST BE ADDED
+    const BANNED = ['badword1', 'badword2']; // Add words here
 
-    // --- PROFANITY FILTER LIST ---
-    // Add any words you want to block here
-    const BANNED_WORDS = ['badword1', 'badword2', 'idiot', 'stupid']; 
-
-    function filterText(text) {
-        let cleanText = text;
-        BANNED_WORDS.forEach(word => {
-            const regex = new RegExp(word, 'gi');
-            cleanText = cleanText.replace(regex, '🌿🌿🌿');
-        });
-        return cleanText;
-    }
-
-    let jungleData = { posts: [] };
-    let model = null;
+    let model, jungleData = { posts: [] };
 
     window.onload = async () => {
-        cocoSsd.load().then(res => {
-            model = res;
-            document.getElementById('aiIndicator').innerText = "AI GATEKEEPER ONLINE";
-        });
-        loadJungle();
+        model = await cocoSsd.load();
+        document.getElementById('aiStat').innerText = "AI ACTIVE";
+        refresh();
     };
 
-    async function loadJungle() {
-        try {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': API_KEY }
-            });
-            const json = await res.json();
-            jungleData = json.record;
-            renderFeed();
-        } catch (e) { console.error("Memory Error", e); }
+    async function refresh() {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
+        const json = await res.json();
+        jungleData = json.record;
+        render();
     }
 
-    async function updateJungle() {
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-            body: JSON.stringify(jungleData)
-        });
-        renderFeed();
-    }
-
-    async function runAiCheck() {
-        const file = document.getElementById('videoFile').files[0];
-        const status = document.getElementById('statusBox');
-        const btn = document.getElementById('postBtn');
+    async function autoProcess() {
+        const file = document.getElementById('vidIn').files[0];
+        const status = document.getElementById('status');
         if (!file) return;
-        status.innerText = "AI SCANNING FOR HUMANS...";
-        const vid = document.getElementById('aiProcessor');
+
+        status.innerText = "AI SCANNING...";
+        const vid = document.getElementById('processor');
         vid.src = URL.createObjectURL(file);
-        vid.onloadeddata = () => {
+        
+        vid.onloadeddata = async () => {
             vid.currentTime = 1;
             setTimeout(async () => {
-                const predictions = await model.detect(vid);
-                const humanDetected = predictions.some(p => p.class === 'person');
-                if (humanDetected) {
-                    status.innerText = "REJECTED: HUMAN DETECTED.";
-                    status.style.color = "#ff4444";
-                    btn.disabled = true;
+                const results = await model.detect(vid);
+                const isHuman = results.some(p => p.class === 'person');
+                if (isHuman) {
+                    status.innerText = "❌ REJECTED: HUMAN DETECTED";
+                    status.style.color = "red";
                 } else {
-                    status.innerText = "PASSED: JUNGLE CERTIFIED.";
-                    status.style.color = "#00ff88";
-                    btn.disabled = false;
-                    btn.innerText = "LOGIN TO GOOGLE & POST";
+                    status.innerText = "✅ PASSED: JUNGLE CERTIFIED";
+                    status.style.color = "lime";
+                    document.getElementById('mainBtn').style.display = 'block';
                 }
             }, 1000);
         };
     }
 
     function startAuth() {
-        const client = google.accounts.oauth2.initTokenClient({
+        google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: 'https://www.googleapis.com/auth/youtube.upload',
-            callback: (auth) => { if (auth.access_token) uploadVideo(auth.access_token); }
-        });
-        client.requestAccessToken();
+            callback: (res) => { if (res.access_token) upload(res.access_token); }
+        }).requestAccessToken();
     }
 
-    async function uploadVideo(token) {
-        const file = document.getElementById('videoFile').files[0];
-        const title = filterText(document.getElementById('videoTitle').value || "Untamed Footage");
-        const metadata = { snippet: { title: title }, status: { privacyStatus: 'unlisted' } };
-        const formData = new FormData();
-        formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        formData.append('file', file);
+    async function upload(token) {
+        document.getElementById('status').innerText = "UPLOADING...";
+        const file = document.getElementById('vidIn').files[0];
+        const title = filter(document.getElementById('titleIn').value || "Jungle Clip");
+
+        const meta = { snippet: { title: title }, status: { privacyStatus: 'unlisted' } };
+        const fd = new FormData();
+        fd.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+        fd.append('file', file);
+
         const res = await fetch('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
-            method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
+            method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd
         });
         const data = await res.json();
+        
         if (data.id) {
             jungleData.posts.unshift({ id: data.id, title: title, rating: 0, comments: [] });
-            await updateJungle();
-            toggleModal(false);
+            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                body: JSON.stringify(jungleData)
+            });
+            location.reload(); // Auto-refresh everything
         }
     }
 
-    function renderFeed() {
-        const feed = document.getElementById('feed');
-        if (jungleData.posts.length === 0) {
-            feed.innerHTML = "<p style='text-align:center; color:#444; margin-top:50px;'>The jungle is empty.</p>";
-            return;
-        }
-        feed.innerHTML = jungleData.posts.map(post => `
+    function filter(t) {
+        BANNED.forEach(w => t = t.replace(new RegExp(w, 'gi'), '🌿'));
+        return t;
+    }
+
+    function render() {
+        document.getElementById('feed').innerHTML = jungleData.posts.map(p => `
             <div class="card">
-                <iframe src="https://www.youtube.com/embed/${post.id}"></iframe>
-                <div class="content-padding">
-                    <h2 style="margin:0;">${post.title}</h2>
-                    <div style="margin: 10px 0;">
-                        ${[1,2,3,4,5].map(n => `<span class="star ${n <= post.rating ? 'active' : ''}" onclick="handleRate('${post.id}', ${n})">★</span>`).join('')}
-                    </div>
-                    <div class="comment-section">
-                        <div id="comms-${post.id}">${post.comments.map(c => `<div class="comment">${c}</div>`).join('')}</div>
-                        <input type="text" placeholder="Add to the roar..." onkeydown="if(event.key==='Enter') handleComment('${post.id}', this)">
+                <iframe src="https://www.youtube.com/embed/${p.id}"></iframe>
+                <div class="content">
+                    <h3>${p.title}</h3>
+                    <div>${[1,2,3,4,5].map(n => `<span class="star ${n<=p.rating?'active':''}" onclick="rate('${p.id}',${n})">★</span>`).join('')}</div>
+                    <div class="comment-box">
+                        ${p.comments.map(c => `<div style="font-size:12px; margin-bottom:5px;">🐅 ${c}</div>`).join('')}
+                        <input type="text" placeholder="Add comment..." onkeydown="if(event.key==='Enter') comment('${p.id}',this)">
                     </div>
                 </div>
             </div>
         `).join('');
     }
 
-    async function handleRate(postId, val) {
-        const post = jungleData.posts.find(p => p.id === postId);
-        post.rating = val;
-        await updateJungle();
+    async function rate(id, v) {
+        jungleData.posts.find(p => p.id === id).rating = v;
+        update();
     }
 
-    async function handleComment(postId, el) {
-        if (!el.value.trim()) return;
-        const cleanComment = filterText(el.value.trim());
-        const post = jungleData.posts.find(p => p.id === postId);
-        post.comments.push(cleanComment);
-        el.value = "";
-        await updateJungle();
+    async function comment(id, el) {
+        jungleData.posts.find(p => p.id === id).comments.push(filter(el.value));
+        update();
     }
 
-    function toggleModal(show) { document.getElementById('uploadOverlay').style.display = show ? 'flex' : 'none'; }
+    async function update() {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+            body: JSON.stringify(jungleData)
+        });
+        render();
+    }
 </script>
 </body>
 </html>
