@@ -5,97 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wildlife: create/watch the jungle</title>
     <style>
-        :root { 
-            --glow: #00ff41; 
-            --dim: #003b00; 
-            --bg: #050505; 
-            --error: #ff3333;
-        }
-
-        body, html { 
-            margin: 0; padding: 0; min-height: 100vh; 
-            background: var(--bg); color: var(--glow); 
-            font-family: 'Courier New', Courier, monospace; 
-            overflow-x: hidden;
-        }
-
-        /* CRT SCANLINE OVERLAY */
-        body::after {
-            content: " "; display: block; position: fixed; inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
-            z-index: 9999; background-size: 100% 3px; pointer-events: none;
-        }
-
-        /* --- AUTHENTICATION --- */
-        #auth-screen {
-            position: fixed; inset: 0; background: var(--bg); z-index: 5000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px;
-        }
-
-        .terminal-window {
-            border: 1px solid var(--glow); padding: 30px; 
-            max-width: 450px; width: 100%; box-shadow: 0 0 20px var(--dim);
-            background: rgba(0, 10, 0, 0.95);
-        }
+        :root { --glow: #00ff41; --dim: #003b00; --bg: #050505; --error: #ff3333; }
+        body, html { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--glow); font-family: 'Courier New', Courier, monospace; overflow-x: hidden; }
+        body::after { content: " "; display: block; position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%); z-index: 9999; background-size: 100% 3px; pointer-events: none; }
+        
+        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .terminal-window { border: 1px solid var(--glow); padding: 30px; max-width: 450px; width: 100%; box-shadow: 0 0 20px var(--dim); background: rgba(0, 10, 0, 0.95); }
 
         .pfp-grid { display: flex; justify-content: space-between; margin: 20px 0; }
-        .pfp-item { 
-            cursor: pointer; border: 1px solid var(--dim); 
-            padding: 10px; font-size: 1.5rem; transition: 0.2s; 
-        }
+        .pfp-item { cursor: pointer; border: 1px solid var(--dim); padding: 10px; font-size: 1.5rem; transition: 0.2s; }
         .pfp-item.selected { border-color: var(--glow); background: var(--dim); box-shadow: 0 0 10px var(--glow); }
 
-        /* --- INTERFACE --- */
         #main-interface { display: none; padding: 20px; }
         .header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--dim); padding-bottom: 20px; }
         
         #feed { max-width: 600px; margin: 0 auto; }
-        .jungle-card { 
-            border: 1px solid var(--glow); margin-bottom: 60px; 
-            background: rgba(0, 20, 0, 0.1); 
-        }
-
-        .video-portal { 
-            display: flex; width: 100%; aspect-ratio: 16/9; background: #000; 
-            text-decoration: none; color: var(--glow); 
-            flex-direction: column; align-items: center; justify-content: center;
-            border-bottom: 1px solid var(--glow); transition: 0.3s;
-        }
-        .video-portal:hover { background: var(--dim); }
-
-        /* --- UI ELEMENTS --- */
-        input { 
-            background: #000; border: 1px solid var(--dim); color: var(--glow); 
-            padding: 12px; width: 100%; box-sizing: border-box; 
-            margin-top: 10px; font-family: inherit; 
-        }
-        .btn { 
-            border: 1px solid var(--glow); background: transparent; 
-            color: var(--glow); padding: 12px; width: 100%; 
-            margin-top: 20px; cursor: pointer; font-family: inherit; 
-            text-transform: uppercase; font-weight: bold;
-        }
+        .jungle-card { border: 1px solid var(--glow); margin-bottom: 60px; background: rgba(0, 20, 0, 0.1); }
+        .video-portal { display: flex; width: 100%; aspect-ratio: 16/9; background: #000; text-decoration: none; color: var(--glow); flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--glow); }
+        
+        input { background: #000; border: 1px solid var(--dim); color: var(--glow); padding: 12px; width: 100%; box-sizing: border-box; margin-top: 10px; font-family: inherit; }
+        .btn { border: 1px solid var(--glow); background: transparent; color: var(--glow); padding: 12px; width: 100%; margin-top: 20px; cursor: pointer; font-family: inherit; text-transform: uppercase; font-weight: bold; }
         .btn:hover { background: var(--glow); color: #000; }
         
         .toggle-text { font-size: 0.7rem; margin-top: 15px; cursor: pointer; text-decoration: underline; opacity: 0.6; text-align: center; }
-
-        .add-btn { 
-            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; 
-            border: 1px solid var(--glow); background: #000; color: var(--glow); 
-            border-radius: 50%; font-size: 30px; cursor: pointer; z-index: 2000; 
-        }
+        .add-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border: 1px solid var(--glow); background: #000; color: var(--glow); border-radius: 50%; font-size: 30px; cursor: pointer; z-index: 2000; }
     </style>
 </head>
 <body>
 
-<audio id="bg-music" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg">
-</audio>
+<audio id="bg-music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
 
 <div id="auth-screen">
     <div class="terminal-window">
         <h2 id="auth-title">CREATE_IDENTITY</h2>
+        <div id="auth-loading" style="display:none; color:yellow; font-size:0.8rem; margin-bottom:10px;">> CONNECTING_TO_DATABASE...</div>
         
         <input type="text" id="username" placeholder="USERNAME...">
         <input type="password" id="password" placeholder="PASSWORD...">
@@ -103,7 +46,6 @@
         <div id="signup-fields">
             <p style="font-size: 0.7rem; margin-top: 15px;">BIRTH_DATE (13-16_AGE_GATE):</p>
             <input type="date" id="dob">
-            
             <p style="font-size: 0.7rem; margin-top: 15px;">PICK_AVATAR:</p>
             <div class="pfp-grid">
                 <div class="pfp-item" onclick="pickAvatar(this, '💻')">💻</div>
@@ -121,9 +63,8 @@
 
 <div id="main-interface">
     <div class="header">
-        <h1 style="font-size: 1.2rem; letter-spacing: 2px;">WILDLIFE: create/watch the jungle</h1>
+        <h1>WILDLIFE: create/watch the jungle</h1>
         <div id="user-display" style="font-size: 0.8rem; opacity: 0.7;"></div>
-        <div id="admin-indicator" style="color:var(--error); font-size:0.6rem; display:none; margin-top:10px;">[ ADMIN_PRIVILEGES_ENABLED ]</div>
     </div>
     <div id="feed"></div>
 </div>
@@ -136,7 +77,7 @@
         <input type="text" id="vUrl" placeholder="GOOGLE_DRIVE_LINK...">
         <input type="text" id="vTitle" placeholder="STREAM_TITLE...">
         <button class="btn" onclick="uploadStream()">[ COMMENCE_UPLOAD ]</button>
-        <button class="btn" style="border-color:#444; color:#444;" onclick="document.getElementById('uploadModal').style.display='none'">[ ABORT ]</button>
+        <button class="btn" style="border-color:#444;" onclick="document.getElementById('uploadModal').style.display='none'">[ ABORT ]</button>
     </div>
 </div>
 
@@ -159,28 +100,41 @@
         loginMode = !loginMode;
         document.getElementById('auth-title').innerText = loginMode ? "LOGIN_IDENTITY" : "CREATE_IDENTITY";
         document.getElementById('signup-fields').style.display = loginMode ? "none" : "block";
-        document.getElementById('auth-toggle').innerText = loginMode ? "Need an account? Signup here." : "Already have an account? Login here.";
+        document.getElementById('auth-toggle').innerText = loginMode ? "Need account? Signup." : "Have account? Login.";
     }
 
     async function sync() {
-        const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
-            headers: {'X-Master-Key': KEY, 'X-Bin-Meta': 'false'},
-            cache: 'no-store'
-        });
-        db = await r.json();
+        try {
+            const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
+                headers: { 'X-Master-Key': KEY, 'X-Bin-Meta': 'false' }
+            });
+            if (!r.ok) throw new Error("Network response was not ok");
+            db = await r.json();
+            if (!db.posts) db.posts = [];
+            if (!db.accounts) db.accounts = [];
+        } catch (e) {
+            console.error("Sync error:", e);
+        }
     }
 
     async function save() {
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT', headers: {'Content-Type': 'application/json', 'X-Master-Key': KEY},
-            body: JSON.stringify(db)
-        });
+        try {
+            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Master-Key': KEY },
+                body: JSON.stringify(db)
+            });
+        } catch (e) {
+            console.error("Save error:", e);
+        }
     }
 
     async function executeAuth() {
+        document.getElementById('auth-loading').style.display = 'block';
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value;
         const err = document.getElementById('auth-err');
+        
         await sync();
 
         if (loginMode) {
@@ -189,17 +143,21 @@
                 localStorage.setItem('jungle_id', JSON.stringify(account));
                 location.reload();
             } else {
-                err.innerText = "INVALID_LOGINS_OR_ACCESS_DENIED";
+                err.innerText = "ACCESS_DENIED";
+                document.getElementById('auth-loading').style.display = 'none';
             }
         } else {
             const dob = document.getElementById('dob').value;
-            if(!user || !pass || !dob || !selectedEmoji) { err.innerText = "FIELDS_INCOMPLETE"; return; }
-            
+            if(!user || !pass || !dob || !selectedEmoji) { 
+                err.innerText = "FIELDS_MISSING"; 
+                document.getElementById('auth-loading').style.display = 'none';
+                return; 
+            }
             const age = Math.floor((new Date() - new Date(dob)) / 31557600000);
-            if(age < 13 || age > 16) { err.innerText = "IDENTITY_REJECTED: AGE_GATE_VIOLATION"; return; }
-            if(db.accounts.find(a => a.user === user)) { err.innerText = "USERNAME_ALREADY_EXISTS"; return; }
+            if(age < 13 || age > 16) { err.innerText = "AGE_VIOLATION"; return; }
+            if(db.accounts.find(a => a.user === user)) { err.innerText = "NAME_TAKEN"; return; }
 
-            const newAcc = { user, pass, pfp: selectedEmoji, id: Date.now() };
+            const newAcc = { user, pass, pfp: selectedEmoji };
             db.accounts.push(newAcc);
             await save();
             localStorage.setItem('jungle_id', JSON.stringify(newAcc));
@@ -209,30 +167,18 @@
 
     async function uploadStream() {
         const url = document.getElementById('vUrl').value;
-        const title = document.getElementById('vTitle').value || "UNTITLED_LOG";
-        if(!url.includes('drive.google.com')) return alert("MUST_USE_GOOGLE_DRIVE");
-
+        if(!url.includes('drive.google.com')) return alert("G-DRIVE ONLY");
         db.posts.unshift({
             id: Date.now(), author: sessionUser.user, pfp: sessionUser.pfp,
-            url, title, comments: []
+            url, title: document.getElementById('vTitle').value || "LOG", comments: []
         });
         await save();
         location.reload();
     }
 
-    async function erase(id) {
-        if(confirm("DELETE_FROM_DATABASE?")) {
-            db.posts = db.posts.filter(p => p.id !== id);
-            await save();
-            renderFeed();
-        }
-    }
-
     async function postComment(postId, input) {
-        const val = input.value.trim();
-        if(!val) return;
         const post = db.posts.find(p => p.id === postId);
-        post.comments.push(`${sessionUser.user}: ${val}`);
+        post.comments.push(`${sessionUser.user}: ${input.value}`);
         input.value = "WRITING...";
         await save();
         input.value = "";
@@ -243,26 +189,24 @@
         const container = document.getElementById('feed');
         container.innerHTML = db.posts.map(p => `
             <div class="jungle-card">
-                <div style="padding:10px 15px; font-size:0.7rem; border-bottom:1px solid var(--dim);">
-                    ${p.pfp} <strong>${p.author}</strong>
-                </div>
-                <a href="${p.url}" target="_blank" class="video-portal">
-                    <span style="font-size:2.5rem;">▶</span>
-                    <small>EXECUTE_JUNGLE_STREAM</small>
-                </a>
+                <div style="padding:10px; font-size:0.7rem; border-bottom:1px solid var(--dim);">${p.pfp} ${p.author}</div>
+                <a href="${p.url}" target="_blank" class="video-portal"><span>▶</span><small>VIEW_DRIVE</small></a>
                 <div style="padding:20px;">
                     <h2 style="margin:0; font-size:1.1rem;">${p.title}</h2>
-                    ${sessionUser.user === 'mjmc50' ? `<button class="btn" style="color:red; border-color:red; margin-top:10px; padding:5px; font-size:0.6rem;" onclick="erase(${p.id})">ERASE_DATA</button>` : ''}
-                    
-                    <div style="margin-top:20px; border-top:1px solid var(--dim); padding-top:15px;">
+                    ${sessionUser.user === 'mjmc50' ? `<button class="btn" style="color:red; border-color:red; margin-top:10px; padding:5px; font-size:0.6rem;" onclick="erase(${p.id})">ERASE</button>` : ''}
+                    <div style="margin-top:20px; border-top:1px solid var(--dim); padding-top:10px;">
                         <input placeholder="ADD_LOG..." onkeydown="if(event.key==='Enter') postComment(${p.id}, this)">
-                        <div style="font-size:0.75rem; margin-top:10px; color:#888;">
-                            ${(p.comments || []).slice().reverse().map(c => `<div style="margin-bottom:5px;">> ${c}</div>`).join('')}
+                        <div style="font-size:0.7rem; margin-top:10px; color:#888;">
+                            ${(p.comments || []).slice().reverse().map(c => `<div>> ${c}</div>`).join('')}
                         </div>
                     </div>
                 </div>
             </div>
         `).join('');
+    }
+
+    async function erase(id) {
+        if(confirm("DELETE?")) { db.posts = db.posts.filter(p => p.id !== id); await save(); renderFeed(); }
     }
 
     window.onload = async () => {
@@ -272,9 +216,6 @@
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('main-interface').style.display = 'block';
             document.getElementById('user-display').innerText = `ID: ${sessionUser.pfp} ${sessionUser.user}`;
-            
-            if(sessionUser.user === 'mjmc50') document.getElementById('admin-indicator').style.display = 'block';
-
             document.addEventListener('click', () => { document.getElementById('bg-music').play(); }, {once:true});
             await sync();
             renderFeed();
