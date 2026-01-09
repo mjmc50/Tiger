@@ -5,55 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TigerStream | B&W Wildlife</title>
     <style>
-        :root { --main: #ffffff; --bg: #000000; --gray: #222222; --text: #cccccc; }
+        :root { --main: #ffffff; --bg: #000000; --gray: #333333; --text: #aaaaaa; }
         body, html { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--main); font-family: 'Courier New', Courier, monospace; }
 
         /* --- HUB --- */
         #entrance { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
-        .logo { font-size: 3rem; font-weight: 900; letter-spacing: 5px; color: var(--main); border-bottom: 5px solid var(--main); margin-bottom: 40px; }
-        .choice-btn { width: 300px; padding: 15px; margin: 12px; border: 2px solid var(--main); background: transparent; color: white; cursor: pointer; text-transform: uppercase; }
+        .logo { font-size: 3rem; font-weight: 900; letter-spacing: 5px; border-bottom: 5px solid var(--main); margin-bottom: 40px; }
+        .choice-btn { width: 300px; padding: 15px; border: 2px solid var(--main); background: transparent; color: white; cursor: pointer; text-transform: uppercase; }
         .choice-btn:hover { background: var(--main); color: #000; }
 
-        /* --- CARDS --- */
+        /* --- UNIFIED FEED --- */
         .page { display: none; padding: 80px 15px; }
-        .tiger-card { background: #000; border: 1px solid var(--main); max-width: 600px; margin: 0 auto 60px; overflow: hidden; }
+        #feed { max-width: 600px; margin: 0 auto; }
+        .tiger-card { background: #000; border: 1px solid var(--main); margin-bottom: 60px; position: relative; }
         
-        /* DRIVE PREVIEW BOX */
-        .drive-preview { 
-            width: 100%; aspect-ratio: 16/9; background: #111; 
-            display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; border-bottom: 1px solid var(--main);
-            text-decoration: none; color: var(--main);
+        .watch-link { 
+            display: block; width: 100%; aspect-ratio: 16/9; background: #111; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            text-decoration: none; color: var(--main); border-bottom: 1px solid var(--main);
+            transition: 0.2s;
         }
-        .drive-preview:hover { background: #222; }
+        .watch-link:hover { background: #222; }
+        .watch-link span { font-size: 2.5rem; margin-bottom: 10px; }
 
         .card-body { padding: 20px; }
         .interaction-row { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .btn-action { background: transparent; border: 1px solid var(--main); color: white; padding: 8px 15px; cursor: pointer; }
+        .btn-action { background: transparent; border: 1px solid var(--main); color: white; padding: 8px 15px; cursor: pointer; font-family: inherit; }
         
-        .stars { display: flex; gap: 5px; font-size: 1.2rem; color: #444; }
-        .stars span { cursor: pointer; }
+        .stars { display: flex; gap: 8px; font-size: 1.5rem; color: #444; }
+        .stars span { cursor: pointer; transition: 0.1s; }
         .stars span.active { color: var(--main); }
 
-        /* COMMENTS */
-        .comment-box { border-top: 1px solid var(--gray); padding-top: 15px; }
-        .com-input { width: 100%; background: #000; border: 1px solid var(--gray); color: white; padding: 10px; box-sizing: border-box; margin-bottom: 10px; }
-        .com-list { font-size: 0.8rem; color: var(--text); }
-        .com-item { padding: 8px 0; border-bottom: 1px dotted var(--gray); }
+        /* --- COMMENTS --- */
+        .comment-section { border-top: 1px solid var(--gray); padding-top: 15px; }
+        .com-input { width: 100%; background: #000; border: 1px solid var(--main); color: white; padding: 12px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
+        .com-list { font-size: 0.85rem; color: var(--text); max-height: 150px; overflow-y: auto; }
+        .com-item { padding: 8px 0; border-bottom: 1px solid var(--gray); word-wrap: break-word; }
 
-        /* NAV */
         .back-btn { position: fixed; top: 20px; left: 20px; z-index: 2500; border: 1px solid var(--main); background: #000; color: #fff; padding: 10px; cursor: pointer; display: none; }
-        .add-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border: 2px solid var(--main); background: #000; color: #fff; font-size: 30px; cursor: pointer; z-index: 2000; }
+        .add-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border: 2px solid var(--main); background: #000; color: #fff; font-size: 35px; cursor: pointer; z-index: 2000; border-radius: 50%; }
 
         #uploadModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 4000; align-items: center; justify-content: center; }
-        .modal-inner { border: 1px solid var(--main); padding: 30px; width: 90%; max-width: 350px; text-align: center; background: #000; }
+        .modal-inner { border: 1px solid var(--main); padding: 30px; width: 90%; max-width: 400px; background: #000; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="entrance">
     <div class="logo">WILDLIFE</div>
-    <button class="choice-btn" onclick="navTo('wildlife')">ENTER FEED</button>
+    <button class="choice-btn" onclick="enterFeed()">ENTER FEED</button>
 </div>
 
 <button class="back-btn" id="backBtn" onclick="location.reload()">BACK</button>
@@ -63,12 +63,11 @@
 
 <div id="uploadModal">
     <div class="modal-inner">
-        <h3>PASTE DRIVE LINK</h3>
-        <p style="font-size: 10px;">1. Upload to Google Drive<br>2. Set sharing to "Anyone with link"<br>3. Paste the link below</p>
-        <input type="text" id="driveUrlIn" placeholder="https://drive.google.com/..." class="com-input">
-        <input type="text" id="titleIn" placeholder="VIDEO TITLE..." class="com-input">
-        <button class="choice-btn" style="width:100%;" onclick="addDrivePost()">SAVE PERMANENTLY</button>
-        <button onclick="document.getElementById('uploadModal').style.display='none'" style="background:none; border:none; color:gray; cursor:pointer; margin-top:10px;">CANCEL</button>
+        <h3>ADD_CLIP_URL</h3>
+        <input type="text" id="driveUrlIn" placeholder="GOOGLE_DRIVE_LINK..." class="com-input">
+        <input type="text" id="titleIn" placeholder="TITLE..." class="com-input">
+        <button class="choice-btn" style="width:100%;" onclick="addPost()">COMMIT_TO_DATABASE</button>
+        <button onclick="document.getElementById('uploadModal').style.display='none'" style="background:none; border:none; color:gray; cursor:pointer; margin-top:20px;">[ CLOSE ]</button>
     </div>
 </div>
 
@@ -80,6 +79,7 @@
     async function sync() {
         const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': KEY, 'X-Bin-Meta': 'false'}});
         db = await r.json();
+        if(!db.posts) db.posts = [];
     }
 
     async function save() {
@@ -89,10 +89,10 @@
         });
     }
 
-    async function addDrivePost() {
+    async function addPost() {
         const url = document.getElementById('driveUrlIn').value;
         const title = document.getElementById('titleIn').value || "UNTITLED";
-        if(!url.includes('drive.google.com')) return alert("Please use a Google Drive link!");
+        if(!url.includes('drive.google.com')) return alert("Invalid Link");
 
         db.posts.unshift({
             id: Date.now(),
@@ -105,69 +105,71 @@
         location.reload();
     }
 
-    function navTo(page) {
+    async function enterFeed() {
+        await sync();
         document.getElementById('entrance').style.display = 'none';
         document.getElementById('backBtn').style.display = 'block';
-        document.getElementById(page + '-page').style.display = 'block';
-        render(db.posts, document.getElementById('feed'));
+        document.getElementById('wildlife-page').style.display = 'block';
+        render();
     }
 
-    function render(data, target) {
-        target.innerHTML = data.map(p => {
-            const stars = Math.round(p.rating || 0);
+    function render() {
+        const target = document.getElementById('feed');
+        target.innerHTML = db.posts.map(p => {
+            const currentAvg = Math.round(p.rating || 0);
             return `
             <div class="tiger-card">
-                <a href="${p.url}" target="_blank" class="drive-preview">
-                    ▶ WATCH ON GOOGLE DRIVE
+                <a href="${p.url}" target="_blank" class="watch-link">
+                    <span>▶</span>
+                    <strong>OPEN IN DRIVE</strong>
                 </a>
                 <div class="card-body">
                     <h2 style="margin:0 0 10px 0;">${p.title}</h2>
                     <div class="interaction-row">
-                        <button class="btn-action" onclick="handleReact(${p.id}, 'likes')">UP: ${p.likes}</button>
-                        <button class="btn-action" onclick="handleReact(${p.id}, 'dislikes')">DOWN: ${p.dislikes}</button>
+                        <button class="btn-action" onclick="react(${p.id}, 'likes')">UP: ${p.likes}</button>
+                        <button class="btn-action" onclick="react(${p.id}, 'dislikes')">DOWN: ${p.dislikes}</button>
                         <div class="stars">
-                            ${[1,2,3,4,5].map(n => `<span class="${n <= stars ? 'active' : ''}" onclick="handleRate(${p.id}, ${n})">●</span>`).join('')}
+                            ${[1,2,3,4,5].map(n => `<span class="${n <= currentAvg ? 'active' : ''}" onclick="rate(${p.id}, ${n})">●</span>`).join('')}
                         </div>
                     </div>
-                    <div class="comment-box">
-                        <input class="com-input" placeholder="ADD COMMENT & HIT ENTER..." 
-                               onkeydown="if(event.key==='Enter') { handleComment(${p.id}, this); }">
-                        <div class="com-list">${(p.comments || []).slice().reverse().map(c => `<div class="com-item">> ${c}</div>`).join('')}</div>
+                    <div class="comment-section">
+                        <input class="com-input" placeholder="COMMENT + ENTER" onkeydown="if(event.key==='Enter') postComment(${p.id}, this)">
+                        <div class="com-list">
+                            ${(p.comments || []).slice().reverse().map(c => `<div class="com-item">> ${c}</div>`).join('')}
+                        </div>
                     </div>
                 </div>
             </div>`;
         }).join('');
     }
 
-    async function handleReact(id, key) {
+    async function react(id, key) {
         const p = db.posts.find(x => x.id === id);
         p[key]++;
         await save();
-        render(db.posts, document.getElementById('feed'));
+        render(); 
     }
 
-    async function handleRate(id, val) {
+    async function rate(id, val) {
         const p = db.posts.find(x => x.id === id);
         if(!p.ratings) p.ratings = [];
         p.ratings.push(val);
         p.rating = p.ratings.reduce((a,b) => a+b, 0) / p.ratings.length;
         await save();
-        render(db.posts, document.getElementById('feed'));
+        render(); // Now refreshes without locking
     }
 
-    async function handleComment(id, input) {
-        if(!input.value.trim()) return;
+    async function postComment(id, input) {
+        const val = input.value.trim();
+        if(!val) return;
         const p = db.posts.find(x => x.id === id);
         if(!p.comments) p.comments = [];
-        p.comments.push(input.value);
-        const text = input.value;
-        input.value = "Saving...";
+        p.comments.push(val);
+        input.value = "SYNC...";
         await save();
         input.value = "";
-        render(db.posts, document.getElementById('feed'));
+        render();
     }
-
-    sync();
 </script>
 </body>
 </html>
