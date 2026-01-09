@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TigerStream | Private Jungle</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <title>TigerStream | School Hub</title>
     <style>
         :root { --tiger: #ff8c00; --bg: #000; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: white; height: 100vh; overflow: hidden; font-family: 'Arial Black', sans-serif; }
@@ -13,13 +11,15 @@
         .login-box { background: #111; padding: 30px; border-radius: 20px; border: 2px solid var(--tiger); width: 280px; text-align: center; }
         #feed { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .card { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none; }
-        .overlay { position: relative; z-index: 2; background: linear-gradient(transparent, rgba(0,0,0,0.95)); padding: 25px; padding-bottom: 120px; }
+        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        .overlay { position: relative; z-index: 2; background: linear-gradient(transparent, rgba(0,0,0,0.95)); padding: 25px; padding-bottom: 120px; pointer-events: none; }
+        .overlay > * { pointer-events: auto; }
         .rank-tag { font-size: 0.7rem; color: var(--tiger); background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; display: inline-block; }
         .star { cursor: pointer; font-size: 2rem; color: #333; margin-right: 5px; text-shadow: 0 0 10px black; }
+        .star.active { color: var(--tiger); }
         input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
         .btn { background: var(--tiger); border: none; padding: 15px; width: 100%; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 15px; }
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; z-index: 100; }
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; z-index: 100; cursor: pointer; }
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1500; align-items: center; justify-content: center; }
     </style>
 </head>
@@ -30,7 +30,7 @@
         <h1 style="color:var(--tiger)">🐅 ACCESS</h1>
         <input type="text" id="userIn" placeholder="Username">
         <input type="password" id="passIn" placeholder="Password">
-        <button class="btn" onclick="attemptLogin()">ENTER JUNGLE</button>
+        <button class="btn" onclick="attemptLogin()">ENTER HUB</button>
         <p id="error" style="color:red; font-size:11px; margin-top:10px;"></p>
     </div>
 </div>
@@ -40,16 +40,14 @@
 
 <div id="modal">
     <div class="login-box">
-        <h2 style="color:var(--tiger)">UPLOAD CLIP</h2>
-        <input type="file" id="vidFile" accept="video/*" onchange="runAiScan()">
-        <input type="text" id="vidTitle" placeholder="Caption...">
-        <div id="status" style="font-size:11px; margin: 10px 0; color: #888;">AI scanning for humans...</div>
-        <button id="postBtn" class="btn" style="display:none;" onclick="uploadToJungle()">POST</button>
-        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:grey; margin-top:10px;">Cancel</button>
+        <h2 style="color:var(--tiger)">POST CONTENT</h2>
+        <input type="file" id="vidFile" accept="video/*" onchange="checkFile()">
+        <input type="text" id="vidTitle" placeholder="Caption (Fights, Trends, etc)...">
+        <div id="status" style="font-size:11px; margin: 10px 0; color: #888;">No inappropriate activity allowed.</div>
+        <button id="postBtn" class="btn" style="display:none;" onclick="uploadToJungle()">POST TO FEED</button>
+        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:grey; margin-top:10px; cursor:pointer;">Cancel</button>
     </div>
 </div>
-
-<video id="aiHelper" style="display:none;" muted></video>
 
 <script>
     const ADMIN_PASS = "Jungle2026"; 
@@ -57,16 +55,17 @@
     const API_KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy'; 
 
     let jungleData = { posts: [], users: {} };
-    let model;
 
     async function refresh() {
         try {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}});
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
+                headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}
+            });
             const data = await res.json();
             jungleData = data.record || data;
             if(!jungleData.users) jungleData.users = {};
             renderFeed();
-        } catch (e) { console.log("Memory error"); }
+        } catch (e) { console.log("Sync Error"); }
     }
 
     async function attemptLogin() {
@@ -78,19 +77,21 @@
         await refresh();
         let myID = localStorage.getItem('jungle_device_id') || 'DEV-' + Math.random().toString(36).substr(2, 9);
         
-        if (jungleData.users[u] && jungleData.users[u] !== myID) return err.innerText = "Device Locked.";
+        if (jungleData.users[u] && jungleData.users[u] !== myID) {
+            return err.innerText = "Account locked to another device.";
+        }
 
         localStorage.setItem('jungle_device_id', myID);
         jungleData.users[u] = myID; 
         await updateCloud();
         document.getElementById('loginOverlay').style.display = 'none';
-        initAI();
+        refresh(); 
     }
 
     function renderFeed() {
         const feed = document.getElementById('feed');
         if (!jungleData.posts || jungleData.posts.length === 0) {
-            feed.innerHTML = '<div class="card" style="justify-content:center; align-items:center;"><h2>JUNGLE IS EMPTY</h2></div>';
+            feed.innerHTML = '<div class="card" style="justify-content:center; align-items:center;"><h2>NO POSTS YET</h2></div>';
             return;
         }
         feed.innerHTML = [...jungleData.posts].sort(() => Math.random() - 0.5).map(p => {
@@ -98,49 +99,41 @@
             const counts = {};
             ratings.forEach(r => counts[r] = (counts[r] || 0) + 1);
             const top = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, 0);
-            return `<div class="card">
+            return `
+            <div class="card">
                 <video src="${p.url}" loop playsinline onclick="this.paused ? this.play() : this.pause()"></video>
                 <div class="overlay">
-                    <div class="rank-tag">MOST VOTED: ${top || 'New'} ★</div>
-                    <h2>${p.title}</h2>
-                    <div>${[1,2,3,4,5].map(n => `<span class="star" onclick="rate('${p.url}', ${n})">★</span>`).join('')}</div>
+                    <div class="rank-tag">RATING: ${top || 'New'} ★</div>
+                    <h2 style="margin:0;">${p.title}</h2>
+                    <div style="margin:15px 0;">
+                        ${[1,2,3,4,5].map(n => `<span class="star" onclick="rate('${p.url}', ${n})">★</span>`).join('')}
+                    </div>
                 </div>
             </div>`;
         }).join('');
     }
 
-    async function initAI() {
-        model = await cocoSsd.load();
-        refresh();
-    }
-
-    async function runAiScan() {
-        const status = document.getElementById('status');
-        const vid = document.getElementById('aiHelper');
-        vid.src = URL.createObjectURL(document.getElementById('vidFile').files[0]);
-        vid.onloadeddata = async () => {
-            vid.currentTime = 1;
-            const detect = await model.detect(vid);
-            if (detect.some(p => p.class === 'person')) {
-                status.innerText = "❌ NO HUMANS";
-            } else {
-                status.innerText = "✅ JUNGLE CERTIFIED";
-                document.getElementById('postBtn').style.display = "block";
-            }
-        };
+    function checkFile() {
+        if(document.getElementById('vidFile').files[0]) {
+            document.getElementById('postBtn').style.display = "block";
+        }
     }
 
     async function uploadToJungle() {
+        const status = document.getElementById('status');
+        status.innerText = "UPLOADING TO FEED...";
         const fd = new FormData();
         fd.append('reqtype', 'fileupload');
         fd.append('fileToUpload', document.getElementById('vidFile').files[0]);
-        const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { method: 'POST', body: fd });
-        const videoUrl = await res.text();
-        if (videoUrl.includes('https')) {
-            jungleData.posts.unshift({ url: videoUrl, title: document.getElementById('vidTitle').value, ratings: [] });
-            await updateCloud();
-            location.reload();
-        }
+        try {
+            const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { method: 'POST', body: fd });
+            const videoUrl = await res.text();
+            if (videoUrl.includes('https')) {
+                jungleData.posts.unshift({ url: videoUrl, title: document.getElementById('vidTitle').value || "New Clip", ratings: [] });
+                await updateCloud();
+                location.reload();
+            }
+        } catch (e) { status.innerText = "UPLOAD FAILED."; }
     }
 
     async function updateCloud() {
@@ -150,9 +143,17 @@
         });
     }
 
+    async function rate(url, val) {
+        const post = jungleData.posts.find(p => p.url === url);
+        if(!post.ratings) post.ratings = [];
+        post.ratings.push(val);
+        await updateCloud();
+        alert("Voted " + val + " stars!");
+    }
+
     if (localStorage.getItem('jungle_device_id')) {
         document.getElementById('loginOverlay').style.display = 'none';
-        initAI();
+        refresh();
     }
 </script>
 </body>
