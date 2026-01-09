@@ -9,27 +9,17 @@
     <style>
         :root { --tiger: #ff8c00; --bg: #000; }
         body, html { margin: 0; padding: 0; background: var(--bg); color: white; height: 100vh; overflow: hidden; font-family: 'Arial Black', sans-serif; }
-        
-        /* Login Gate */
         #loginOverlay { position: fixed; inset: 0; background: #0a0a0a; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .login-box { background: #111; padding: 30px; border-radius: 20px; border: 2px solid var(--tiger); width: 280px; text-align: center; }
-        
-        /* TikTok Style Feed */
         #feed { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .card { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
         video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none; }
-        
-        /* UI Layer */
         .overlay { position: relative; z-index: 2; background: linear-gradient(transparent, rgba(0,0,0,0.95)); padding: 25px; padding-bottom: 120px; }
         .rank-tag { font-size: 0.7rem; color: var(--tiger); background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; display: inline-block; }
-        .star { cursor: pointer; font-size: 2rem; color: #333; margin-right: 5px; text-shadow: 0 0 10px black; transition: 0.2s; }
-        .star.active { color: var(--tiger); }
-        
+        .star { cursor: pointer; font-size: 2rem; color: #333; margin-right: 5px; text-shadow: 0 0 10px black; }
         input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
         .btn { background: var(--tiger); border: none; padding: 15px; width: 100%; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 15px; }
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; z-index: 100; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .mute-btn { position: fixed; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.5); border: none; color: white; padding: 12px; border-radius: 50%; cursor: pointer; }
-        
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; z-index: 100; }
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1500; align-items: center; justify-content: center; }
     </style>
 </head>
@@ -39,13 +29,12 @@
     <div class="login-box">
         <h1 style="color:var(--tiger)">🐅 ACCESS</h1>
         <input type="text" id="userIn" placeholder="Username">
-        <input type="password" id="passIn" placeholder="Password (5+ characters)">
+        <input type="password" id="passIn" placeholder="Password">
         <button class="btn" onclick="attemptLogin()">ENTER JUNGLE</button>
-        <p id="error" style="color:red; font-size:12px; margin-top:10px;"></p>
+        <p id="error" style="color:red; font-size:11px; margin-top:10px;"></p>
     </div>
 </div>
 
-<button class="mute-btn" onclick="toggleMute()">🔊</button>
 <div id="feed"></div>
 <button class="fab" onclick="document.getElementById('modal').style.display='flex'">+</button>
 
@@ -54,181 +43,114 @@
         <h2 style="color:var(--tiger)">UPLOAD CLIP</h2>
         <input type="file" id="vidFile" accept="video/*" onchange="runAiScan()">
         <input type="text" id="vidTitle" placeholder="Caption...">
-        <div id="status" style="font-size:11px; margin: 10px 0; color: #888;">Must be an animal clip.</div>
+        <div id="status" style="font-size:11px; margin: 10px 0; color: #888;">AI scanning for humans...</div>
         <button id="postBtn" class="btn" style="display:none;" onclick="uploadToJungle()">POST</button>
-        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:grey; margin-top:10px; cursor:pointer;">Cancel</button>
+        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:grey; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
 <video id="aiHelper" style="display:none;" muted></video>
 
 <script>
-    // --- CONFIG (ADJUSTED FOR YOUR BIN) ---
     const ADMIN_PASS = "Jungle2026"; 
     const BIN_ID = '69609cd1ae596e708fcf605f'; 
     const API_KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy'; 
-    const BANNED = ['badword1', 'badword2'];
 
     let jungleData = { posts: [], users: {} };
-    let isMuted = false;
     let model;
 
-    // --- SECURITY & DEVICE LOCK ---
+    async function refresh() {
+        try {
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}});
+            const data = await res.json();
+            jungleData = data.record || data;
+            if(!jungleData.users) jungleData.users = {};
+            renderFeed();
+        } catch (e) { console.log("Memory error"); }
+    }
+
     async function attemptLogin() {
         const u = document.getElementById('userIn').value.trim();
         const p = document.getElementById('passIn').value;
         const err = document.getElementById('error');
+        if (p !== ADMIN_PASS) return err.innerText = "Wrong Password.";
 
-        if (BANNED.some(w => u.toLowerCase().includes(w))) return err.innerText = "Name not allowed.";
-        if (p.length < 5) return err.innerText = "Password too short.";
-
+        await refresh();
         let myID = localStorage.getItem('jungle_device_id') || 'DEV-' + Math.random().toString(36).substr(2, 9);
         
-        // Initial load to check users
-        await refresh();
+        if (jungleData.users[u] && jungleData.users[u] !== myID) return err.innerText = "Device Locked.";
 
-        if (jungleData.users[u] && jungleData.users[u] !== myID) {
-            return err.innerText = "Account locked to another device.";
-        }
-
-        if (p === ADMIN_PASS) {
-            localStorage.setItem('jungle_device_id', myID);
-            localStorage.setItem('jungle_user', u);
-            jungleData.users[u] = myID; 
-            await updateCloud();
-            document.getElementById('loginOverlay').style.display = 'none';
-            initAI();
-        } else {
-            err.innerText = "Access Denied.";
-        }
+        localStorage.setItem('jungle_device_id', myID);
+        jungleData.users[u] = myID; 
+        await updateCloud();
+        document.getElementById('loginOverlay').style.display = 'none';
+        initAI();
     }
 
-    // --- VIDEO FEED ---
     function renderFeed() {
+        const feed = document.getElementById('feed');
         if (!jungleData.posts || jungleData.posts.length === 0) {
-            document.getElementById('feed').innerHTML = '<div class="card" style="justify-content:center; align-items:center;"><h2>THE JUNGLE IS EMPTY</h2></div>';
+            feed.innerHTML = '<div class="card" style="justify-content:center; align-items:center;"><h2>JUNGLE IS EMPTY</h2></div>';
             return;
         }
-
-        const shuffledPosts = [...jungleData.posts].sort(() => Math.random() - 0.5);
-
-        document.getElementById('feed').innerHTML = shuffledPosts.map(p => {
+        feed.innerHTML = [...jungleData.posts].sort(() => Math.random() - 0.5).map(p => {
             const ratings = p.ratings || [];
             const counts = {};
             ratings.forEach(r => counts[r] = (counts[r] || 0) + 1);
             const top = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, 0);
-
-            return `
-            <div class="card">
+            return `<div class="card">
                 <video src="${p.url}" loop playsinline onclick="this.paused ? this.play() : this.pause()"></video>
                 <div class="overlay">
                     <div class="rank-tag">MOST VOTED: ${top || 'New'} ★</div>
-                    <h2 style="margin:0;">${p.title}</h2>
-                    <div style="margin:15px 0;">
-                        ${[1,2,3,4,5].map(n => `<span class="star" onclick="rate('${p.url}', ${n})">★</span>`).join('')}
-                    </div>
+                    <h2>${p.title}</h2>
+                    <div>${[1,2,3,4,5].map(n => `<span class="star" onclick="rate('${p.url}', ${n})">★</span>`).join('')}</div>
                 </div>
             </div>`;
         }).join('');
-        
-        const firstVid = document.querySelector('video');
-        if(firstVid) firstVid.play();
     }
 
-    // --- AI & UPLOAD ---
     async function initAI() {
         model = await cocoSsd.load();
         refresh();
     }
 
     async function runAiScan() {
-        const file = document.getElementById('vidFile').files[0];
         const status = document.getElementById('status');
         const vid = document.getElementById('aiHelper');
-        vid.src = URL.createObjectURL(file);
+        vid.src = URL.createObjectURL(document.getElementById('vidFile').files[0]);
         vid.onloadeddata = async () => {
             vid.currentTime = 1;
-            setTimeout(async () => {
-                const detect = await model.detect(vid);
-                if (detect.some(p => p.class === 'person')) {
-                    status.innerText = "❌ NO HUMANS ALLOWED";
-                    status.style.color = "red";
-                    document.getElementById('postBtn').style.display = "none";
-                } else {
-                    status.innerText = "✅ JUNGLE CERTIFIED";
-                    status.style.color = "lime";
-                    document.getElementById('postBtn').style.display = "block";
-                }
-            }, 500);
+            const detect = await model.detect(vid);
+            if (detect.some(p => p.class === 'person')) {
+                status.innerText = "❌ NO HUMANS";
+            } else {
+                status.innerText = "✅ JUNGLE CERTIFIED";
+                document.getElementById('postBtn').style.display = "block";
+            }
         };
     }
 
     async function uploadToJungle() {
-        const file = document.getElementById('vidFile').files[0];
-        const status = document.getElementById('status');
-        status.innerText = "UPLOADING...";
-        
         const fd = new FormData();
         fd.append('reqtype', 'fileupload');
-        fd.append('fileToUpload', file);
-
-        try {
-            // Using a public proxy to bypass Catbox CORS restrictions
-            const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { 
-                method: 'POST', 
-                body: fd 
-            });
-            const videoUrl = await res.text();
-
-            if (videoUrl.includes('https')) {
-                jungleData.posts.unshift({
-                    url: videoUrl,
-                    title: document.getElementById('vidTitle').value || "Tiger Sighting",
-                    ratings: [], 
-                    comments: []
-                });
-                await updateCloud();
-                location.reload();
-            }
-        } catch (e) {
-            status.innerText = "UPLOAD FAILED. TRY AGAIN.";
+        fd.append('fileToUpload', document.getElementById('vidFile').files[0]);
+        const res = await fetch('https://corsproxy.io/?https://catbox.moe/user/api.php', { method: 'POST', body: fd });
+        const videoUrl = await res.text();
+        if (videoUrl.includes('https')) {
+            jungleData.posts.unshift({ url: videoUrl, title: document.getElementById('vidTitle').value, ratings: [] });
+            await updateCloud();
+            location.reload();
         }
-    }
-
-    async function rate(url, val) {
-        const post = jungleData.posts.find(p => p.url === url);
-        if(!post.ratings) post.ratings = [];
-        post.ratings.push(val);
-        await updateCloud();
-    }
-
-    function toggleMute() {
-        isMuted = !isMuted;
-        document.querySelectorAll('video').forEach(v => v.muted = isMuted);
-        document.querySelector('.mute-btn').innerText = isMuted ? "🔇" : "🔊";
-    }
-
-    async function refresh() {
-        try {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
-                headers: {'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false'}
-            });
-            jungleData = await res.json();
-            renderFeed();
-        } catch (e) { console.error("Memory error"); }
     }
 
     async function updateCloud() {
         await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT', 
-            headers: {'Content-Type': 'application/json', 'X-Master-Key': API_KEY},
+            method: 'PUT', headers: {'Content-Type': 'application/json', 'X-Master-Key': API_KEY},
             body: JSON.stringify(jungleData)
         });
-        renderFeed();
     }
 
-    // Auto-login check
-    if (localStorage.getItem('jungle_device_id') && localStorage.getItem('jungle_user')) {
+    if (localStorage.getItem('jungle_device_id')) {
         document.getElementById('loginOverlay').style.display = 'none';
         initAI();
     }
