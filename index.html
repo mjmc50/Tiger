@@ -17,43 +17,39 @@
 
         .forest-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: -1; }
 
-        /* --- HUB INTERFACE --- */
+        /* --- HUB --- */
         #entrance { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
         .logo-main { font-size: 3.5rem; font-weight: 900; color: var(--tiger); text-shadow: 0 0 20px var(--tiger); margin-bottom: 40px; }
-        
-        .choice-btn { 
-            width: 300px; padding: 20px; margin: 12px; border-radius: 12px; 
-            border: 2px solid var(--tiger); background: rgba(255,140,0,0.1); color: white; 
-            font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s;
-        }
-        .choice-btn:hover { background: var(--tiger); color: #000; box-shadow: 0 0 30px var(--tiger); transform: translateY(-5px); }
+        .choice-btn { width: 300px; padding: 20px; margin: 12px; border-radius: 12px; border: 2px solid var(--tiger); background: rgba(255,140,0,0.1); color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .choice-btn:hover { background: var(--tiger); color: #000; box-shadow: 0 0 30px var(--tiger); }
 
-        /* --- PERMANENT FEED --- */
+        /* --- CARDS --- */
         .page { display: none; padding: 80px 10px 40px; box-sizing: border-box; }
         #wildlife-feed { max-width: 700px; margin: 0 auto; }
-
-        .tiger-card {
-            background: rgba(20, 20, 20, 0.95); border: 2px solid var(--tiger); border-radius: 20px;
-            box-shadow: 0 0 25px rgba(255, 140, 0, 0.3); margin-bottom: 50px; overflow: hidden;
-        }
-
+        .tiger-card { background: rgba(20, 20, 20, 0.95); border: 2px solid var(--tiger); border-radius: 20px; box-shadow: 0 0 25px rgba(255, 140, 0, 0.3); margin-bottom: 50px; overflow: hidden; }
         .card-header { padding: 12px 20px; border-bottom: 1px solid #333; color: var(--tiger); font-weight: bold; }
-        video { width: 100%; display: block; background: #000; aspect-ratio: 16/9; }
+        
+        /* Video Fix */
+        video { width: 100%; display: block; background: #111; aspect-ratio: 16/9; border-bottom: 1px solid #333; }
 
         .card-body { padding: 20px; }
-        .interaction-row { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
+        .interaction-row { display: flex; align-items: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
         
         .btn-action { background: #222; border: 1px solid #444; color: white; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .star-rating { font-size: 1.5rem; color: #444; cursor: pointer; }
-        .star-rating span.active { color: var(--gold); }
+        .star-rating { font-size: 1.8rem; color: #444; cursor: pointer; display: flex; gap: 5px; }
+        .star-rating span.active { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
 
-        /* --- UI HELPERS --- */
+        /* --- COMMENTS --- */
+        .comment-section { margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; }
+        .com-input { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .com-list { max-height: 100px; overflow-y: auto; font-size: 0.9rem; color: #bbb; }
+        .com-item { padding: 5px 0; border-bottom: 1px solid #222; }
+
         .back-nav { position: fixed; top: 20px; left: 20px; z-index: 2500; background: var(--tiger); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; }
         .fab-add { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border-radius: 50%; background: var(--tiger); border: none; font-size: 35px; color: #000; cursor: pointer; z-index: 2000; box-shadow: 0 0 15px var(--tiger); }
 
         #uploadModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000; align-items: center; justify-content: center; }
         .modal-content { background: #111; padding: 30px; border-radius: 20px; border: 2px solid var(--tiger); width: 320px; text-align: center; }
-        input { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -71,7 +67,7 @@
 
 <div id="wildlife-page" class="page"><div id="wildlife-feed"></div></div>
 <div id="search-page" class="page">
-    <input type="text" placeholder="Search the forest..." style="width:90%; max-width:500px; display:block; margin:0 auto 20px; padding:15px; border-radius:30px; border:2px solid var(--tiger); background:#111; color:white;" oninput="searchJungle(this.value)">
+    <input type="text" placeholder="Search..." style="width:90%; max-width:500px; display:block; margin:0 auto 20px; padding:15px; border-radius:30px; border:2px solid var(--tiger); background:#111; color:white;" oninput="searchJungle(this.value)">
     <div id="search-results"></div>
 </div>
 
@@ -79,9 +75,9 @@
     <div class="modal-content">
         <h2 style="color:var(--tiger); margin:0;">PERMANENT POST</h2>
         <input type="file" id="fIn" accept="video/*" onchange="runAi()">
-        <input type="text" id="tIn" placeholder="Video Title...">
-        <p id="upStatus" style="font-size:12px; color:var(--gold); margin:15px 0;">Video will stay forever.</p>
-        <button id="upBtn" class="choice-btn" style="width:100%; display:none; margin:0;" onclick="startPost()">SAVE PERMANENTLY</button>
+        <input type="text" id="tIn" placeholder="Video Title..." style="width:100%; padding:10px; margin-top:10px; background:#222; color:white; border:1px solid #444; border-radius:8px;">
+        <p id="upStatus" style="font-size:12px; color:var(--gold); margin:15px 0;">Select a clip...</p>
+        <button id="upBtn" class="choice-btn" style="width:100%; display:none; margin:0;" onclick="startPost()">SAVE FOREVER</button>
         <button onclick="document.getElementById('uploadModal').style.display='none'" style="color:gray; background:none; border:none; margin-top:15px; cursor:pointer;">Cancel</button>
     </div>
 </div>
@@ -119,14 +115,14 @@
             vid.currentTime = 1;
             setTimeout(async () => {
                 await ai.detect(vid); 
-                out.innerText = "✅ READY TO POST";
+                out.innerText = "✅ APPROVED";
                 document.getElementById('upBtn').style.display = "block";
             }, 1000);
         };
     }
 
     async function startPost() {
-        document.getElementById('upStatus').innerText = "💾 SAVING PERMANENTLY...";
+        document.getElementById('upStatus').innerText = "💾 UPLOADING...";
         const fd = new FormData();
         fd.append('fileToUpload', document.getElementById('fIn').files[0]);
         fd.append('reqtype', 'fileupload');
@@ -137,7 +133,7 @@
         if(url.includes('https')) {
             database.posts.unshift({
                 url, title: document.getElementById('tIn').value || "Wildlife Clip",
-                likes: 0, dislikes: 0, stars: []
+                likes: 0, dislikes: 0, stars: 0, starVotes: [], comments: []
             });
             await push();
             location.reload();
@@ -156,12 +152,11 @@
 
     function draw(data, target) {
         target.innerHTML = data.map(p => {
-            const starCount = p.stars || [];
-            const average = starCount.length ? (starCount.reduce((a,b)=>a+b,0)/starCount.length).toFixed(1) : "NEW";
+            const avg = p.stars || "NEW";
             return `
             <div class="tiger-card">
                 <div class="card-header">🌳 THE WILDLIFE</div>
-                <video src="${p.url}" controls playsinline></video>
+                <video src="${p.url}" controls playsinline type="video/mp4"></video>
                 <div class="card-body">
                     <h2 style="margin:0; color:var(--tiger)">${p.title}</h2>
                     <div class="interaction-row">
@@ -169,8 +164,12 @@
                         <button class="btn-action" onclick="react('${p.url}','dislikes', this)">👎 ${p.dislikes || 0}</button>
                         <div class="star-rating">
                             ${[1,2,3,4,5].map(n => `<span onclick="rate('${p.url}', ${n})">★</span>`).join('')}
-                            <small style="font-size:12px; color:var(--gold); margin-left:10px;">${average}★</small>
+                            <small style="font-size:12px; color:var(--gold); margin-left:10px;">${avg}★</small>
                         </div>
+                    </div>
+                    <div class="comment-section">
+                        <input class="com-input" placeholder="Write a comment..." onkeydown="if(event.key==='Enter') addComment('${p.url}', this)">
+                        <div class="com-list">${(p.comments || []).slice(-5).reverse().map(c => `<div class="com-item">🐾 ${c}</div>`).join('')}</div>
                     </div>
                 </div>
             </div>`;
@@ -186,10 +185,22 @@
 
     async function rate(url, val) {
         const p = database.posts.find(x => x.url === url);
-        if(!p.stars) p.stars = [];
-        p.stars.push(val);
+        if(!p.starVotes) p.starVotes = [];
+        p.starVotes.push(val);
+        const sum = p.starVotes.reduce((a, b) => a + b, 0);
+        p.stars = (sum / p.starVotes.length).toFixed(1);
         await push();
-        alert("Rated!");
+        alert("Rated " + val + " stars!");
+        location.reload();
+    }
+
+    async function addComment(url, input) {
+        if(!input.value.trim()) return;
+        const p = database.posts.find(x => x.url === url);
+        if(!p.comments) p.comments = [];
+        p.comments.push(input.value);
+        input.value = "";
+        await push();
         location.reload();
     }
 
