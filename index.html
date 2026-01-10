@@ -3,224 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wildlife: create/watch the jungle</title>
+    <title>Wildlife: The Forest Expansion</title>
     <style>
-        :root { --glow: #00ff41; --dim: #003b00; --bg: #050505; --error: #ff3333; }
-        body, html { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--glow); font-family: 'Courier New', Courier, monospace; overflow-x: hidden; }
-        body::after { content: " "; display: block; position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%); z-index: 9999; background-size: 100% 3px; pointer-events: none; }
+        :root { 
+            --glow: #00ff41; --dim: #003b00; --bg: #050505; 
+            --text: #00ff41; --panel: rgba(0, 20, 0, 0.9); --border: #00ff41;
+        }
+        .theme-white { 
+            --glow: #007bff; --dim: #e7f1ff; --bg: #ffffff; 
+            --text: #333333; --panel: #f1f1f1; --border: #007bff;
+        }
         
-        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .terminal-window { border: 1px solid var(--glow); padding: 30px; max-width: 450px; width: 100%; box-shadow: 0 0 20px var(--dim); background: rgba(0, 10, 0, 0.95); }
+        body, html { 
+            margin: 0; padding: 0; min-height: 100vh; background: var(--bg); 
+            color: var(--text); font-family: 'Courier New', monospace; transition: 0.3s;
+            overflow-x: hidden;
+        }
 
-        .pfp-grid { display: flex; justify-content: space-between; margin: 20px 0; }
-        .pfp-item { cursor: pointer; border: 1px solid var(--dim); padding: 10px; font-size: 1.5rem; transition: 0.2s; }
-        .pfp-item.selected { border-color: var(--glow); background: var(--dim); box-shadow: 0 0 10px var(--glow); }
+        /* SCANLINES */
+        body::after {
+            content: " "; display: block; position: fixed; inset: 0;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%);
+            z-index: 9999; background-size: 100% 3px; pointer-events: none;
+        }
 
-        #main-interface { display: none; padding: 20px; }
-        .header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--dim); padding-bottom: 20px; }
+        /* NAVIGATION & COMMAND CENTER */
+        #forest-nav { 
+            position: fixed; top: 15px; left: 15px; z-index: 9000; 
+            cursor: pointer; font-size: 35px; filter: drop-shadow(0 0 5px var(--glow)); 
+        }
         
-        #feed { max-width: 600px; margin: 0 auto; }
-        .jungle-card { border: 1px solid var(--glow); margin-bottom: 60px; background: rgba(0, 20, 0, 0.1); }
-        .video-portal { display: flex; width: 100%; aspect-ratio: 16/9; background: #000; text-decoration: none; color: var(--glow); flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--glow); }
-        
-        input { background: #000; border: 1px solid var(--dim); color: var(--glow); padding: 12px; width: 100%; box-sizing: border-box; margin-top: 10px; font-family: inherit; }
-        .btn { border: 1px solid var(--glow); background: transparent; color: var(--glow); padding: 12px; width: 100%; margin-top: 20px; cursor: pointer; font-family: inherit; text-transform: uppercase; font-weight: bold; }
-        .btn:hover { background: var(--glow); color: #000; }
-        
-        .toggle-text { font-size: 0.7rem; margin-top: 15px; cursor: pointer; text-decoration: underline; opacity: 0.6; text-align: center; }
-        .add-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border: 1px solid var(--glow); background: #000; color: var(--glow); border-radius: 50%; font-size: 30px; cursor: pointer; z-index: 2000; }
+        #command-center { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            z-index: 9001; align-items: center; justify-content: center; 
+        }
+
+        .menu-box { 
+            background: var(--bg); border: 2px solid var(--border); padding: 25px; 
+            width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 10px;
+        }
+
+        .menu-btn { 
+            border: 1px solid var(--border); background: none; color: var(--text); 
+            padding: 12px; cursor: pointer; text-align: left; font-family: inherit; font-weight: bold;
+        }
+        .menu-btn:hover { background: var(--glow); color: #000; }
+
+        /* MODULE WINDOWS */
+        .module-window { 
+            display: none; position: fixed; inset: 0; background: var(--bg); 
+            z-index: 9005; padding: 40px 20px; overflow-y: auto; 
+        }
+        .close-mod { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; color: var(--error); }
+
+        /* CARDS & UI */
+        #feed { max-width: 600px; margin: 80px auto; padding: 10px; }
+        .card { 
+            border: 1px solid var(--border); margin-bottom: 40px; 
+            background: var(--panel); position: relative;
+        }
+        .card-header { padding: 10px; border-bottom: 1px solid var(--dim); font-size: 0.8rem; }
+        .video-link { 
+            display: block; aspect-ratio: 16/9; background: #000; color: var(--glow);
+            display: flex; align-items: center; justify-content: center; text-decoration: none;
+        }
+
+        input, textarea { 
+            background: #000; border: 1px solid var(--dim); color: var(--glow); 
+            padding: 12px; width: 100%; box-sizing: border-box; font-family: inherit; margin: 5px 0;
+        }
+        .btn { 
+            border: 1px solid var(--border); background: transparent; color: var(--text); 
+            padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase;
+        }
+        .btn:hover { background: var(--border); color: #000; }
+
+        #auth-screen { 
+            position: fixed; inset: 0; background: var(--bg); 
+            z-index: 10000; display: flex; align-items: center; justify-content: center; 
+        }
+
+        .dm-bubble { border-bottom: 1px dashed var(--dim); padding: 5px 0; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-<audio id="bg-music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
+<audio id="bgMusic" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
+<div id="forest-nav" onclick="openMenu()">🌲</div>
 
-<div id="auth-screen">
-    <div class="terminal-window">
-        <h2 id="auth-title">CREATE_IDENTITY</h2>
-        <div id="auth-loading" style="display:none; color:yellow; font-size:0.8rem; margin-bottom:10px;">> CONNECTING_TO_DATABASE...</div>
-        
-        <input type="text" id="username" placeholder="USERNAME...">
-        <input type="password" id="password" placeholder="PASSWORD...">
-        
-        <div id="signup-fields">
-            <p style="font-size: 0.7rem; margin-top: 15px;">BIRTH_DATE (13-16_AGE_GATE):</p>
-            <input type="date" id="dob">
-            <p style="font-size: 0.7rem; margin-top: 15px;">PICK_AVATAR:</p>
-            <div class="pfp-grid">
-                <div class="pfp-item" onclick="pickAvatar(this, '💻')">💻</div>
-                <div class="pfp-item" onclick="pickAvatar(this, '📱')">📱</div>
-                <div class="pfp-item" onclick="pickAvatar(this, '📻')">📻</div>
-                <div class="pfp-item" onclick="pickAvatar(this, '🎸')">🎸</div>
-            </div>
-        </div>
-
-        <button class="btn" onclick="executeAuth()">[ EXECUTE_SESSION ]</button>
-        <p id="auth-err" style="color:var(--error); font-size: 0.7rem; margin-top:10px; text-align:center;"></p>
-        <div class="toggle-text" id="auth-toggle" onclick="toggleAuth()">Already have an account? Login here.</div>
+<div id="command-center">
+    <div class="menu-box">
+        <h2 style="margin:0 0 10px 0; text-align:center;">[ FOREST_OS_V4 ]</h2>
+        <button class="menu-btn" onclick="openMod('dm-mod')">1. [DMs] MESSAGING_CORE</button>
+        <button class="menu-btn" onclick="openMod('forest-mod')">2. [FORESTS] SUB_COMMUNITIES</button>
+        <button class="menu-btn" onclick="openMod('search-mod')">3. [SEARCH] ENTITY_LOCATOR</button>
+        <button class="menu-btn" onclick="openMod('friends-mod')">4. [FRIENDS] CONTACT_LIST</button>
+        <button class="menu-btn" onclick="openMod('self-mod')">5. [PROFILE] IDENTITY_SELF</button>
+        <button class="menu-btn" onclick="openMod('other-mod')">6. [RECON] TARGET_PROFILE</button>
+        <button class="menu-btn" onclick="openMod('settings-mod')">7. [SYSTEM] SETTINGS_STATS</button>
+        <button class="btn" onclick="closeMenu()" style="margin-top:10px; border-color:gray; color:gray;">[ CLOSE ]</button>
     </div>
 </div>
 
-<div id="main-interface">
-    <div class="header">
-        <h1>WILDLIFE: create/watch the jungle</h1>
-        <div id="user-display" style="font-size: 0.8rem; opacity: 0.7;"></div>
+<div id="dm-mod" class="module-window">
+    <span class="close-mod" onclick="closeMod('dm-mod')">×</span>
+    <h3>[ SECURE_DMS ]</h3>
+    <input type="text" id="dm-target" placeholder="TARGET_USERNAME...">
+    <textarea id="dm-text" placeholder="WRITE_MESSAGE..."></textarea>
+    <button class="btn" onclick="sendDM()">ENCRYPT_AND_SEND</button>
+    <div id="dm-list" style="margin-top:20px;"></div>
+</div>
+
+<div id="settings-mod" class="module-window">
+    <span class="close-mod" onclick="closeMod('settings-mod')">×</span>
+    <h3>[ SYSTEM_CONFIG ]</h3>
+    <button class="btn" onclick="toggleTheme()">TOGGLE_STYLE (HACKER/BLUE)</button>
+    <p id="uptime-display" style="margin-top:20px;"></p>
+    <button class="btn" onclick="playLaugh()" style="border-color:yellow; color:yellow;">[ ! ] LAUGH_PROTOCOL</button>
+</div>
+
+<div id="self-mod" class="module-window">
+    <span class="close-mod" onclick="closeMod('self-mod')">×</span>
+    <h3>[ YOUR_IDENTITY ]</h3>
+    <p id="self-info"></p>
+    <textarea id="self-bio" placeholder="UPDATE_BIO..."></textarea>
+    <button class="btn" onclick="updateBio()">UPDATE_BIO_SHIELD</button>
+</div>
+
+<div id="auth-screen">
+    <div class="menu-box">
+        <h2 style="text-align:center;">WILDLIFE_INIT</h2>
+        <input id="u" placeholder="USERNAME">
+        <input id="p" type="password" placeholder="PASSWORD">
+        <div id="signup-extra">
+            <input id="d" type="date">
+            <p style="font-size:0.7rem; margin:10px 0 5px 0;">SELECT_AVATAR:</p>
+            <div style="display:flex; justify-content:space-around; font-size:1.5rem; cursor:pointer; margin-bottom:10px;">
+                <span onclick="selPfp('💻', this)">💻</span><span onclick="selPfp('📱', this)">📱</span><span onclick="selPfp('📻', this)">📻</span><span onclick="selPfp('🎸', this)">🎸</span>
+            </div>
+        </div>
+        <button class="btn" onclick="handleAuth()">ENTER_THE_JUNGLE</button>
+        <p id="auth-err" style="color:red; font-size:0.7rem; text-align:center;"></p>
+        <p class="toggle-text" style="font-size:0.7rem; text-align:center; cursor:pointer;" onclick="toggleAuth()">Swap Login/Signup</p>
     </div>
+</div>
+
+<div id="main-ui" style="display:none;">
     <div id="feed"></div>
 </div>
 
-<button class="add-btn" onclick="document.getElementById('uploadModal').style.display='flex'">+</button>
-
-<div id="uploadModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:8000; align-items:center; justify-content:center;">
-    <div class="terminal-window">
-        <h3>INJECT_DATA_STREAM</h3>
-        <input type="text" id="vUrl" placeholder="GOOGLE_DRIVE_LINK...">
-        <input type="text" id="vTitle" placeholder="STREAM_TITLE...">
-        <button class="btn" onclick="uploadStream()">[ COMMENCE_UPLOAD ]</button>
-        <button class="btn" style="border-color:#444;" onclick="document.getElementById('uploadModal').style.display='none'">[ ABORT ]</button>
-    </div>
-</div>
+<button class="add-btn" style="position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; border:1px solid var(--glow); background:#000; color:var(--glow); cursor:pointer; font-size:30px;" onclick="showUpload()">+</button>
 
 <script>
     const BIN_ID = '69609cd1ae596e708fcf605f';
     const KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy';
-    
-    let db = { posts: [], accounts: [] };
-    let sessionUser = null;
-    let selectedEmoji = "";
-    let loginMode = false;
+    let db = { posts: [], accounts: [], dms: [], forests: [] };
+    let myUser = null;
+    let selectedEmoji = "💻";
+    let isLogin = false;
+    let startTime = Date.now();
 
-    function pickAvatar(el, emoji) {
-        document.querySelectorAll('.pfp-item').forEach(i => i.classList.remove('selected'));
-        el.classList.add('selected');
-        selectedEmoji = emoji;
-    }
-
-    function toggleAuth() {
-        loginMode = !loginMode;
-        document.getElementById('auth-title').innerText = loginMode ? "LOGIN_IDENTITY" : "CREATE_IDENTITY";
-        document.getElementById('signup-fields').style.display = loginMode ? "none" : "block";
-        document.getElementById('auth-toggle').innerText = loginMode ? "Need account? Signup." : "Have account? Login.";
+    // AI CONTENT SHIELD
+    const BANNED = ["badword", "bully", "mean", "hate", "inappropriate", "swear"];
+    function aiShield(text) {
+        const check = text.toLowerCase();
+        return !BANNED.some(word => check.includes(word));
     }
 
     async function sync() {
-        try {
-            const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { 
-                headers: { 'X-Master-Key': KEY, 'X-Bin-Meta': 'false' }
-            });
-            if (!r.ok) throw new Error("Network response was not ok");
-            db = await r.json();
-            if (!db.posts) db.posts = [];
-            if (!db.accounts) db.accounts = [];
-        } catch (e) {
-            console.error("Sync error:", e);
-        }
+        const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': KEY, 'X-Bin-Meta': 'false'}});
+        db = await r.json();
     }
 
     async function save() {
-        try {
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Master-Key': KEY },
-                body: JSON.stringify(db)
-            });
-        } catch (e) {
-            console.error("Save error:", e);
-        }
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT', headers: {'Content-Type': 'application/json', 'X-Master-Key': KEY},
+            body: JSON.stringify(db)
+        });
     }
 
-    async function executeAuth() {
-        document.getElementById('auth-loading').style.display = 'block';
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value;
-        const err = document.getElementById('auth-err');
-        
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('signup-extra').style.display = isLogin ? 'none' : 'block';
+        document.getElementById('auth-err').innerText = "";
+    }
+
+    function selPfp(emoji, el) {
+        selectedEmoji = emoji;
+        el.parentElement.querySelectorAll('span').forEach(s => s.style.border = 'none');
+        el.style.border = '1px solid var(--glow)';
+    }
+
+    async function handleAuth() {
+        const user = document.getElementById('u').value.trim();
+        const pass = document.getElementById('p').value;
         await sync();
 
-        if (loginMode) {
-            const account = db.accounts.find(a => a.user === user && a.pass === pass);
-            if (account) {
-                localStorage.setItem('jungle_id', JSON.stringify(account));
-                location.reload();
-            } else {
-                err.innerText = "ACCESS_DENIED";
-                document.getElementById('auth-loading').style.display = 'none';
-            }
+        if(isLogin) {
+            const acc = db.accounts.find(a => a.user === user && a.pass === pass);
+            if(acc) { loginSuccess(acc); } else { document.getElementById('auth-err').innerText = "INVALID_CREDENTIALS"; }
         } else {
-            const dob = document.getElementById('dob').value;
-            if(!user || !pass || !dob || !selectedEmoji) { 
-                err.innerText = "FIELDS_MISSING"; 
-                document.getElementById('auth-loading').style.display = 'none';
-                return; 
-            }
+            const dob = document.getElementById('d').value;
             const age = Math.floor((new Date() - new Date(dob)) / 31557600000);
-            if(age < 13 || age > 16) { err.innerText = "AGE_VIOLATION"; return; }
-            if(db.accounts.find(a => a.user === user)) { err.innerText = "NAME_TAKEN"; return; }
-
-            const newAcc = { user, pass, pfp: selectedEmoji };
+            if(age < 13 || age > 16) return alert("AGE_GATE_ERROR");
+            if(db.accounts.find(a => a.user === user)) return alert("NAME_TAKEN");
+            const newAcc = { user, pass, pfp: selectedEmoji, bio: "No bio set.", friends: [], joined: Date.now() };
             db.accounts.push(newAcc);
             await save();
-            localStorage.setItem('jungle_id', JSON.stringify(newAcc));
-            location.reload();
+            loginSuccess(newAcc);
         }
     }
 
-    async function uploadStream() {
-        const url = document.getElementById('vUrl').value;
-        if(!url.includes('drive.google.com')) return alert("G-DRIVE ONLY");
-        db.posts.unshift({
-            id: Date.now(), author: sessionUser.user, pfp: sessionUser.pfp,
-            url, title: document.getElementById('vTitle').value || "LOG", comments: []
-        });
-        await save();
-        location.reload();
-    }
-
-    async function postComment(postId, input) {
-        const post = db.posts.find(p => p.id === postId);
-        post.comments.push(`${sessionUser.user}: ${input.value}`);
-        input.value = "WRITING...";
-        await save();
-        input.value = "";
+    function loginSuccess(acc) {
+        myUser = acc;
+        localStorage.setItem('jungle_v4', JSON.stringify(acc));
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-ui').style.display = 'block';
+        document.body.addEventListener('click', () => document.getElementById('bgMusic').play(), {once:true});
         renderFeed();
     }
 
+    function openMenu() { document.getElementById('command-center').style.display='flex'; }
+    function closeMenu() { document.getElementById('command-center').style.display='none'; }
+    function openMod(id) { 
+        closeMenu(); 
+        document.getElementById(id).style.display='block'; 
+        if(id === 'settings-mod') {
+            document.getElementById('uptime-display').innerText = `SESSION_UPTIME: ${Math.floor((Date.now() - startTime)/1000)}s`;
+        }
+        if(id === 'self-mod') {
+            document.getElementById('self-info').innerText = `${myUser.pfp} ${myUser.user} | Joined: ${new Date(myUser.joined).toLocaleDateString()}`;
+            document.getElementById('self-bio').value = myUser.bio;
+        }
+        if(id === 'dm-mod') renderDMs();
+    }
+    function closeMod(id) { document.getElementById(id).style.display='none'; }
+
+    async function updateBio() {
+        const newBio = document.getElementById('self-bio').value;
+        if(!aiShield(newBio)) return alert("AI_SHIELD: BIO_REJECTED (INAPPROPRIATE)");
+        await sync();
+        db.accounts.find(a => a.user === myUser.user).bio = newBio;
+        await save();
+        alert("BIO_UPDATED");
+    }
+
+    async function sendDM() {
+        const target = document.getElementById('dm-target').value.trim();
+        const msg = document.getElementById('dm-text').value;
+        if(!aiShield(msg)) return alert("AI_SHIELD: MESSAGE_REJECTED");
+        if(!db.accounts.find(a => a.user === target)) return alert("USER_NOT_FOUND");
+        
+        db.dms.push({ from: myUser.user, to: target, text: msg, time: Date.now() });
+        await save();
+        document.getElementById('dm-text').value = "";
+        renderDMs();
+    }
+
+    function renderDMs() {
+        const list = db.dms.filter(d => d.to === myUser.user || d.from === myUser.user);
+        document.getElementById('dm-list').innerHTML = list.reverse().map(d => `
+            <div class="dm-bubble"><b>${d.from}</b>: ${d.text}</div>
+        `).join('');
+    }
+
     function renderFeed() {
-        const container = document.getElementById('feed');
-        container.innerHTML = db.posts.map(p => `
-            <div class="jungle-card">
-                <div style="padding:10px; font-size:0.7rem; border-bottom:1px solid var(--dim);">${p.pfp} ${p.author}</div>
-                <a href="${p.url}" target="_blank" class="video-portal"><span>▶</span><small>VIEW_DRIVE</small></a>
-                <div style="padding:20px;">
-                    <h2 style="margin:0; font-size:1.1rem;">${p.title}</h2>
-                    ${sessionUser.user === 'mjmc50' ? `<button class="btn" style="color:red; border-color:red; margin-top:10px; padding:5px; font-size:0.6rem;" onclick="erase(${p.id})">ERASE</button>` : ''}
-                    <div style="margin-top:20px; border-top:1px solid var(--dim); padding-top:10px;">
-                        <input placeholder="ADD_LOG..." onkeydown="if(event.key==='Enter') postComment(${p.id}, this)">
-                        <div style="font-size:0.7rem; margin-top:10px; color:#888;">
-                            ${(p.comments || []).slice().reverse().map(c => `<div>> ${c}</div>`).join('')}
-                        </div>
-                    </div>
-                </div>
+        document.getElementById('feed').innerHTML = db.posts.map(p => `
+            <div class="card">
+                <div class="card-header">${p.pfp} ${p.author}</div>
+                <a href="${p.url}" target="_blank" class="video-link">▶ WATCH_LOG</a>
+                <div style="padding:10px;"><b>${p.title}</b></div>
+                ${myUser.user === 'mjmc50' ? `<button onclick="deletePost(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">[ERASE]</button>` : ''}
             </div>
         `).join('');
     }
 
-    async function erase(id) {
-        if(confirm("DELETE?")) { db.posts = db.posts.filter(p => p.id !== id); await save(); renderFeed(); }
+    async function deletePost(id) {
+        if(confirm("PERMANENTLY_ERASE?")) {
+            db.posts = db.posts.filter(p => p.id !== id);
+            await save();
+            renderFeed();
+        }
+    }
+
+    function toggleTheme() { document.body.classList.toggle('theme-white'); }
+    function playLaugh() { new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3').play(); }
+    function showUpload() {
+        const t = prompt("TITLE:");
+        const u = prompt("G-DRIVE LINK:");
+        if(t && u && u.includes('drive.google.com')) {
+            if(!aiShield(t)) return alert("AI_SHIELD: TITLE_REJECTED");
+            db.posts.unshift({ id: Date.now(), author: myUser.user, pfp: myUser.pfp, title: t, url: u });
+            save().then(() => renderFeed());
+        }
     }
 
     window.onload = async () => {
-        const stored = localStorage.getItem('jungle_id');
-        if(stored) {
-            sessionUser = JSON.parse(stored);
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-interface').style.display = 'block';
-            document.getElementById('user-display').innerText = `ID: ${sessionUser.pfp} ${sessionUser.user}`;
-            document.addEventListener('click', () => { document.getElementById('bg-music').play(); }, {once:true});
-            await sync();
-            renderFeed();
-        }
-    };
+        const saved = localStorage.getItem('jungle_v4');
+        if(saved) loginSuccess(JSON.parse(saved));
+        await sync();
+    }
 </script>
 </body>
 </html>
