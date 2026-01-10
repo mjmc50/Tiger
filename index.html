@@ -5,85 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wildlife: The Forest Expansion</title>
     <style>
-        :root { 
-            --glow: #00ff41; --dim: #003b00; --bg: #050505; 
-            --text: #00ff41; --panel: rgba(0, 20, 0, 0.9); --border: #00ff41;
-        }
-        .theme-white { 
-            --glow: #007bff; --dim: #e7f1ff; --bg: #ffffff; 
-            --text: #333333; --panel: #f1f1f1; --border: #007bff;
-        }
-        
-        body, html { 
-            margin: 0; padding: 0; min-height: 100vh; background: var(--bg); 
-            color: var(--text); font-family: 'Courier New', monospace; transition: 0.3s;
-            overflow-x: hidden;
-        }
-
-        /* SCANLINES */
-        body::after {
-            content: " "; display: block; position: fixed; inset: 0;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%);
-            z-index: 9999; background-size: 100% 3px; pointer-events: none;
-        }
-
-        /* NAVIGATION & COMMAND CENTER */
-        #forest-nav { 
-            position: fixed; top: 15px; left: 15px; z-index: 9000; 
-            cursor: pointer; font-size: 35px; filter: drop-shadow(0 0 5px var(--glow)); 
-        }
-        
-        #command-center { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            z-index: 9001; align-items: center; justify-content: center; 
-        }
-
-        .menu-box { 
-            background: var(--bg); border: 2px solid var(--border); padding: 25px; 
-            width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 10px;
-        }
-
-        .menu-btn { 
-            border: 1px solid var(--border); background: none; color: var(--text); 
-            padding: 12px; cursor: pointer; text-align: left; font-family: inherit; font-weight: bold;
-        }
+        :root { --glow: #00ff41; --dim: #003b00; --bg: #050505; --text: #00ff41; --panel: rgba(0, 20, 0, 0.9); --border: #00ff41; --error: #ff3333; }
+        .theme-white { --glow: #007bff; --dim: #e7f1ff; --bg: #ffffff; --text: #333333; --panel: #f1f1f1; --border: #007bff; }
+        body, html { margin: 0; padding: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; transition: 0.3s; overflow-x: hidden; }
+        body::after { content: " "; display: block; position: fixed; inset: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%); z-index: 9999; background-size: 100% 3px; pointer-events: none; }
+        #forest-nav { position: fixed; top: 15px; left: 15px; z-index: 9000; cursor: pointer; font-size: 35px; filter: drop-shadow(0 0 5px var(--glow)); }
+        #command-center { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9001; align-items: center; justify-content: center; }
+        .menu-box { background: var(--bg); border: 2px solid var(--border); padding: 25px; width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; }
+        .menu-btn { border: 1px solid var(--border); background: none; color: var(--text); padding: 12px; cursor: pointer; text-align: left; font-family: inherit; font-weight: bold; }
         .menu-btn:hover { background: var(--glow); color: #000; }
-
-        /* MODULE WINDOWS */
-        .module-window { 
-            display: none; position: fixed; inset: 0; background: var(--bg); 
-            z-index: 9005; padding: 40px 20px; overflow-y: auto; 
-        }
-        .close-mod { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; color: var(--error); }
-
-        /* CARDS & UI */
+        .module-window { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9005; padding: 40px 20px; overflow-y: auto; }
+        .close-mod { position: absolute; top: 15px; right: 25px; font-size: 30px; cursor: pointer; }
         #feed { max-width: 600px; margin: 80px auto; padding: 10px; }
-        .card { 
-            border: 1px solid var(--border); margin-bottom: 40px; 
-            background: var(--panel); position: relative;
-        }
-        .card-header { padding: 10px; border-bottom: 1px solid var(--dim); font-size: 0.8rem; }
-        .video-link { 
-            display: block; aspect-ratio: 16/9; background: #000; color: var(--glow);
-            display: flex; align-items: center; justify-content: center; text-decoration: none;
-        }
-
-        input, textarea { 
-            background: #000; border: 1px solid var(--dim); color: var(--glow); 
-            padding: 12px; width: 100%; box-sizing: border-box; font-family: inherit; margin: 5px 0;
-        }
-        .btn { 
-            border: 1px solid var(--border); background: transparent; color: var(--text); 
-            padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase;
-        }
+        .card { border: 1px solid var(--border); margin-bottom: 40px; background: var(--panel); padding: 10px; }
+        input, textarea { background: #000; border: 1px solid var(--dim); color: var(--glow); padding: 12px; width: 100%; box-sizing: border-box; font-family: inherit; margin: 5px 0; }
+        .btn { border: 1px solid var(--border); background: transparent; color: var(--text); padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; }
         .btn:hover { background: var(--border); color: #000; }
-
-        #auth-screen { 
-            position: fixed; inset: 0; background: var(--bg); 
-            z-index: 10000; display: flex; align-items: center; justify-content: center; 
-        }
-
-        .dm-bubble { border-bottom: 1px dashed var(--dim); padding: 5px 0; font-size: 0.9rem; }
+        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .result-item { border: 1px solid var(--dim); padding: 10px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -93,215 +32,218 @@
 
 <div id="command-center">
     <div class="menu-box">
-        <h2 style="margin:0 0 10px 0; text-align:center;">[ FOREST_OS_V4 ]</h2>
-        <button class="menu-btn" onclick="openMod('dm-mod')">1. [DMs] MESSAGING_CORE</button>
-        <button class="menu-btn" onclick="openMod('forest-mod')">2. [FORESTS] SUB_COMMUNITIES</button>
-        <button class="menu-btn" onclick="openMod('search-mod')">3. [SEARCH] ENTITY_LOCATOR</button>
-        <button class="menu-btn" onclick="openMod('friends-mod')">4. [FRIENDS] CONTACT_LIST</button>
-        <button class="menu-btn" onclick="openMod('self-mod')">5. [PROFILE] IDENTITY_SELF</button>
-        <button class="menu-btn" onclick="openMod('other-mod')">6. [RECON] TARGET_PROFILE</button>
-        <button class="menu-btn" onclick="openMod('settings-mod')">7. [SYSTEM] SETTINGS_STATS</button>
-        <button class="btn" onclick="closeMenu()" style="margin-top:10px; border-color:gray; color:gray;">[ CLOSE ]</button>
+        <h2 style="text-align:center;">[ FOREST_OS ]</h2>
+        <button class="menu-btn" onclick="openMod('dm-mod')">1. [DMs] MESSAGING</button>
+        <button class="menu-btn" onclick="openMod('forest-mod')">2. [FORESTS] SUB-COMMUNITIES</button>
+        <button class="menu-btn" onclick="openMod('search-mod')">3. [SEARCH] USER_FINDER</button>
+        <button class="menu-btn" onclick="openMod('friends-mod')">4. [FRIENDS] CONTACTS</button>
+        <button class="menu-btn" onclick="openMod('self-mod')">5. [PROFILE] MY_IDENTITY</button>
+        <button class="menu-btn" onclick="openMod('other-mod')">6. [RECON] VIEW_OTHERS</button>
+        <button class="menu-btn" onclick="openMod('settings-mod')">7. [SYSTEM] SETTINGS</button>
+        <button class="btn" onclick="closeMenu()">[ CLOSE ]</button>
     </div>
 </div>
 
-<div id="dm-mod" class="module-window">
-    <span class="close-mod" onclick="closeMod('dm-mod')">×</span>
-    <h3>[ SECURE_DMS ]</h3>
-    <input type="text" id="dm-target" placeholder="TARGET_USERNAME...">
-    <textarea id="dm-text" placeholder="WRITE_MESSAGE..."></textarea>
-    <button class="btn" onclick="sendDM()">ENCRYPT_AND_SEND</button>
+<div id="dm-mod" class="module-window"><span class="close-mod" onclick="closeMod('dm-mod')">×</span>
+    <h3>[ DMs ]</h3>
+    <input id="dm-target" placeholder="Recipient Username...">
+    <textarea id="dm-text" placeholder="Message..."></textarea>
+    <button class="btn" onclick="sendDM()">SEND</button>
     <div id="dm-list" style="margin-top:20px;"></div>
 </div>
 
-<div id="settings-mod" class="module-window">
-    <span class="close-mod" onclick="closeMod('settings-mod')">×</span>
-    <h3>[ SYSTEM_CONFIG ]</h3>
-    <button class="btn" onclick="toggleTheme()">TOGGLE_STYLE (HACKER/BLUE)</button>
-    <p id="uptime-display" style="margin-top:20px;"></p>
-    <button class="btn" onclick="playLaugh()" style="border-color:yellow; color:yellow;">[ ! ] LAUGH_PROTOCOL</button>
+<div id="forest-mod" class="module-window"><span class="close-mod" onclick="closeMod('forest-mod')">×</span>
+    <h3>[ FORESTS ]</h3>
+    <input id="f-name" placeholder="New Forest Name...">
+    <button class="btn" onclick="createForest()">CREATE_FOREST</button>
+    <div id="forest-list" style="margin-top:20px;"></div>
 </div>
 
-<div id="self-mod" class="module-window">
-    <span class="close-mod" onclick="closeMod('self-mod')">×</span>
-    <h3>[ YOUR_IDENTITY ]</h3>
-    <p id="self-info"></p>
-    <textarea id="self-bio" placeholder="UPDATE_BIO..."></textarea>
-    <button class="btn" onclick="updateBio()">UPDATE_BIO_SHIELD</button>
+<div id="search-mod" class="module-window"><span class="close-mod" onclick="closeMod('search-mod')">×</span>
+    <h3>[ USER_SEARCH ]</h3>
+    <input id="search-input" placeholder="Enter username..." oninput="doSearch()">
+    <div id="search-results"></div>
+</div>
+
+<div id="friends-mod" class="module-window"><span class="close-mod" onclick="closeMod('friends-mod')">×</span>
+    <h3>[ FRIENDS ]</h3>
+    <div id="friends-list"></div>
+</div>
+
+<div id="self-mod" class="module-window"><span class="close-mod" onclick="closeMod('self-mod')">×</span>
+    <h3>[ MY_PROFILE ]</h3>
+    <div id="self-data"></div>
+    <textarea id="bio-input" placeholder="Write bio..."></textarea>
+    <button class="btn" onclick="saveBio()">SAVE_BIO</button>
+</div>
+
+<div id="other-mod" class="module-window"><span class="close-mod" onclick="closeMod('other-mod')">×</span>
+    <h3>[ RECON ]</h3>
+    <input id="recon-target" placeholder="Username to scan...">
+    <button class="btn" onclick="reconUser()">SCAN_USER</button>
+    <div id="recon-result" style="margin-top:20px;"></div>
+</div>
+
+<div id="settings-mod" class="module-window"><span class="close-mod" onclick="closeMod('settings-mod')">×</span>
+    <h3>[ SETTINGS ]</h3>
+    <button class="btn" onclick="toggleTheme()">TOGGLE_THEME</button>
+    <button class="btn" onclick="playLaugh()">LAUGH_PROTOCOL</button>
+    <p id="uptime-box"></p>
 </div>
 
 <div id="auth-screen">
     <div class="menu-box">
-        <h2 style="text-align:center;">WILDLIFE_INIT</h2>
-        <input id="u" placeholder="USERNAME">
-        <input id="p" type="password" placeholder="PASSWORD">
-        <div id="signup-extra">
-            <input id="d" type="date">
-            <p style="font-size:0.7rem; margin:10px 0 5px 0;">SELECT_AVATAR:</p>
-            <div style="display:flex; justify-content:space-around; font-size:1.5rem; cursor:pointer; margin-bottom:10px;">
-                <span onclick="selPfp('💻', this)">💻</span><span onclick="selPfp('📱', this)">📱</span><span onclick="selPfp('📻', this)">📻</span><span onclick="selPfp('🎸', this)">🎸</span>
-            </div>
-        </div>
-        <button class="btn" onclick="handleAuth()">ENTER_THE_JUNGLE</button>
-        <p id="auth-err" style="color:red; font-size:0.7rem; text-align:center;"></p>
-        <p class="toggle-text" style="font-size:0.7rem; text-align:center; cursor:pointer;" onclick="toggleAuth()">Swap Login/Signup</p>
+        <h2 style="text-align:center;">WILDLIFE_LOGIN</h2>
+        <input id="u" placeholder="USERNAME"><input id="p" type="password" placeholder="PASSWORD">
+        <div id="signup-extra"><input id="d" type="date"></div>
+        <button class="btn" onclick="handleAuth()">INITIALIZE</button>
+        <p onclick="toggleAuth()" style="font-size:0.7rem; text-align:center; cursor:pointer;">Toggle Login/Signup</p>
     </div>
 </div>
 
-<div id="main-ui" style="display:none;">
-    <div id="feed"></div>
-</div>
-
-<button class="add-btn" style="position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; border:1px solid var(--glow); background:#000; color:var(--glow); cursor:pointer; font-size:30px;" onclick="showUpload()">+</button>
+<div id="main-ui" style="display:none;"><div id="feed"></div></div>
+<button class="add-btn" style="position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; border:1px solid var(--glow); background:#000; color:var(--glow); cursor:pointer; font-size:30px;" onclick="addPost()">+</button>
 
 <script>
     const BIN_ID = '69609cd1ae596e708fcf605f';
     const KEY = '$2a$10$sGFP1dkFd/v7sGKtbL3XLOYw0jsKRMUNIgsTU/iwij0XnwUAeJPWy';
     let db = { posts: [], accounts: [], dms: [], forests: [] };
-    let myUser = null;
-    let selectedEmoji = "💻";
+    let me = null;
     let isLogin = false;
     let startTime = Date.now();
 
-    // AI CONTENT SHIELD
-    const BANNED = ["badword", "bully", "mean", "hate", "inappropriate", "swear"];
-    function aiShield(text) {
-        const check = text.toLowerCase();
-        return !BANNED.some(word => check.includes(word));
-    }
+    const AI_SHIELD = (t) => !["badword", "bully", "mean"].some(w => t.toLowerCase().includes(w));
 
     async function sync() {
         const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: {'X-Master-Key': KEY, 'X-Bin-Meta': 'false'}});
         db = await r.json();
     }
-
     async function save() {
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT', headers: {'Content-Type': 'application/json', 'X-Master-Key': KEY},
-            body: JSON.stringify(db)
-        });
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { method: 'PUT', headers: {'Content-Type': 'application/json', 'X-Master-Key': KEY}, body: JSON.stringify(db)});
     }
 
-    function toggleAuth() {
-        isLogin = !isLogin;
-        document.getElementById('signup-extra').style.display = isLogin ? 'none' : 'block';
-        document.getElementById('auth-err').innerText = "";
-    }
-
-    function selPfp(emoji, el) {
-        selectedEmoji = emoji;
-        el.parentElement.querySelectorAll('span').forEach(s => s.style.border = 'none');
-        el.style.border = '1px solid var(--glow)';
-    }
-
+    function toggleAuth() { isLogin = !isLogin; document.getElementById('signup-extra').style.display = isLogin ? 'none' : 'block'; }
+    
     async function handleAuth() {
         const user = document.getElementById('u').value.trim();
         const pass = document.getElementById('p').value;
         await sync();
-
         if(isLogin) {
-            const acc = db.accounts.find(a => a.user === user && a.pass === pass);
-            if(acc) { loginSuccess(acc); } else { document.getElementById('auth-err').innerText = "INVALID_CREDENTIALS"; }
+            me = db.accounts.find(a => a.user === user && a.pass === pass);
+            if(!me) return alert("FAIL");
         } else {
-            const dob = document.getElementById('d').value;
-            const age = Math.floor((new Date() - new Date(dob)) / 31557600000);
-            if(age < 13 || age > 16) return alert("AGE_GATE_ERROR");
-            if(db.accounts.find(a => a.user === user)) return alert("NAME_TAKEN");
-            const newAcc = { user, pass, pfp: selectedEmoji, bio: "No bio set.", friends: [], joined: Date.now() };
-            db.accounts.push(newAcc);
+            const age = Math.floor((new Date() - new Date(document.getElementById('d').value)) / 31557600000);
+            if(age < 13 || age > 16) return alert("AGE_GATE");
+            me = { user, pass, pfp: '💻', bio: "Empty bio.", friends: [], joined: Date.now() };
+            db.accounts.push(me);
             await save();
-            loginSuccess(newAcc);
         }
-    }
-
-    function loginSuccess(acc) {
-        myUser = acc;
-        localStorage.setItem('jungle_v4', JSON.stringify(acc));
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('main-ui').style.display = 'block';
-        document.body.addEventListener('click', () => document.getElementById('bgMusic').play(), {once:true});
-        renderFeed();
+        localStorage.setItem('jungle_v4', JSON.stringify(me));
+        location.reload();
     }
 
     function openMenu() { document.getElementById('command-center').style.display='flex'; }
     function closeMenu() { document.getElementById('command-center').style.display='none'; }
+    
     function openMod(id) { 
-        closeMenu(); 
-        document.getElementById(id).style.display='block'; 
-        if(id === 'settings-mod') {
-            document.getElementById('uptime-display').innerText = `SESSION_UPTIME: ${Math.floor((Date.now() - startTime)/1000)}s`;
-        }
-        if(id === 'self-mod') {
-            document.getElementById('self-info').innerText = `${myUser.pfp} ${myUser.user} | Joined: ${new Date(myUser.joined).toLocaleDateString()}`;
-            document.getElementById('self-bio').value = myUser.bio;
-        }
+        closeMenu(); document.getElementById(id).style.display='block'; 
         if(id === 'dm-mod') renderDMs();
+        if(id === 'forest-mod') renderForests();
+        if(id === 'friends-mod') renderFriends();
+        if(id === 'self-mod') {
+            document.getElementById('self-data').innerHTML = `<b>${me.user}</b><br>Joined: ${new Date(me.joined).toLocaleDateString()}`;
+            document.getElementById('bio-input').value = me.bio;
+        }
     }
     function closeMod(id) { document.getElementById(id).style.display='none'; }
 
-    async function updateBio() {
-        const newBio = document.getElementById('self-bio').value;
-        if(!aiShield(newBio)) return alert("AI_SHIELD: BIO_REJECTED (INAPPROPRIATE)");
-        await sync();
-        db.accounts.find(a => a.user === myUser.user).bio = newBio;
-        await save();
-        alert("BIO_UPDATED");
+    // 2. FORESTS
+    async function createForest() {
+        const name = document.getElementById('f-name').value;
+        if(!AI_SHIELD(name)) return alert("AI_BLOCKED");
+        db.forests.push({ name, creator: me.user });
+        await save(); renderForests();
+    }
+    function renderForests() {
+        document.getElementById('forest-list').innerHTML = db.forests.map(f => `<div class="result-item">🌲 ${f.name} <small>by ${f.creator}</small></div>`).join('');
+    }
+
+    // 3. SEARCH
+    function doSearch() {
+        const val = document.getElementById('search-input').value.toLowerCase();
+        const res = db.accounts.filter(a => a.user.toLowerCase().includes(val));
+        document.getElementById('search-results').innerHTML = res.map(r => `<div class="result-item">${r.user} <button onclick="addFriend('${r.user}')">+</button></div>`).join('');
+    }
+
+    // 4. FRIENDS
+    async function addFriend(name) {
+        if(name === me.user) return;
+        const acc = db.accounts.find(a => a.user === me.user);
+        if(!acc.friends.includes(name)) {
+            acc.friends.push(name);
+            me.friends = acc.friends;
+            await save(); alert("ADDED");
+        }
+    }
+    function renderFriends() {
+        document.getElementById('friends-list').innerHTML = me.friends.map(f => `<div class="result-item">${f}</div>`).join('');
+    }
+
+    // 5. BIO SAVE
+    async function saveBio() {
+        const b = document.getElementById('bio-input').value;
+        if(!AI_SHIELD(b)) return alert("AI_BLOCKED");
+        const acc = db.accounts.find(a => a.user === me.user);
+        acc.bio = b;
+        me.bio = b;
+        localStorage.setItem('jungle_v4', JSON.stringify(me));
+        await save(); alert("BIO_SAVED");
+    }
+
+    // 6. RECON
+    function reconUser() {
+        const target = document.getElementById('recon-target').value;
+        const u = db.accounts.find(a => a.user === target);
+        if(!u) return alert("NOT_FOUND");
+        document.getElementById('recon-result').innerHTML = `<b>${u.user}</b><br>Bio: ${u.bio}<br>Friends: ${u.friends.length}`;
     }
 
     async function sendDM() {
-        const target = document.getElementById('dm-target').value.trim();
+        const target = document.getElementById('dm-target').value;
         const msg = document.getElementById('dm-text').value;
-        if(!aiShield(msg)) return alert("AI_SHIELD: MESSAGE_REJECTED");
-        if(!db.accounts.find(a => a.user === target)) return alert("USER_NOT_FOUND");
-        
-        db.dms.push({ from: myUser.user, to: target, text: msg, time: Date.now() });
-        await save();
-        document.getElementById('dm-text').value = "";
-        renderDMs();
+        if(!AI_SHIELD(msg)) return alert("AI_BLOCKED");
+        db.dms.push({ from: me.user, to: target, text: msg });
+        await save(); renderDMs();
     }
-
     function renderDMs() {
-        const list = db.dms.filter(d => d.to === myUser.user || d.from === myUser.user);
-        document.getElementById('dm-list').innerHTML = list.reverse().map(d => `
-            <div class="dm-bubble"><b>${d.from}</b>: ${d.text}</div>
-        `).join('');
-    }
-
-    function renderFeed() {
-        document.getElementById('feed').innerHTML = db.posts.map(p => `
-            <div class="card">
-                <div class="card-header">${p.pfp} ${p.author}</div>
-                <a href="${p.url}" target="_blank" class="video-link">▶ WATCH_LOG</a>
-                <div style="padding:10px;"><b>${p.title}</b></div>
-                ${myUser.user === 'mjmc50' ? `<button onclick="deletePost(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">[ERASE]</button>` : ''}
-            </div>
-        `).join('');
-    }
-
-    async function deletePost(id) {
-        if(confirm("PERMANENTLY_ERASE?")) {
-            db.posts = db.posts.filter(p => p.id !== id);
-            await save();
-            renderFeed();
-        }
+        const list = db.dms.filter(d => d.to === me.user || d.from === me.user);
+        document.getElementById('dm-list').innerHTML = list.map(d => `<div><b>${d.from}</b>: ${d.text}</div>`).join('');
     }
 
     function toggleTheme() { document.body.classList.toggle('theme-white'); }
     function playLaugh() { new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3').play(); }
-    function showUpload() {
-        const t = prompt("TITLE:");
-        const u = prompt("G-DRIVE LINK:");
-        if(t && u && u.includes('drive.google.com')) {
-            if(!aiShield(t)) return alert("AI_SHIELD: TITLE_REJECTED");
-            db.posts.unshift({ id: Date.now(), author: myUser.user, pfp: myUser.pfp, title: t, url: u });
-            save().then(() => renderFeed());
+
+    async function addPost() {
+        const t = prompt("Title:");
+        const u = prompt("Drive URL:");
+        if(t && u && AI_SHIELD(t)) {
+            db.posts.unshift({ author: me.user, title: t, url: u });
+            await save(); renderFeed();
         }
+    }
+    function renderFeed() {
+        document.getElementById('feed').innerHTML = db.posts.map(p => `<div class="card"><b>${p.author}</b><br><a href="${p.url}" target="_blank">▶ VIEW</a><br>${p.title}</div>`).join('');
     }
 
     window.onload = async () => {
         const saved = localStorage.getItem('jungle_v4');
-        if(saved) loginSuccess(JSON.parse(saved));
-        await sync();
+        if(saved) {
+            me = JSON.parse(saved);
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'block';
+            await sync();
+            renderFeed();
+        }
     }
 </script>
 </body>
